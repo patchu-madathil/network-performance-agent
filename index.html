@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browser Network Performance Agent</title>
-    <!-- Load required external libraries from reliable CDNs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://unpkg.com/@m-lab/ndt7/dist/ndt7.min.js"></script>
     <style>
@@ -14,6 +13,9 @@
             --accent-color: #2563eb;
             --danger-color: #dc2626;
             --success-color: #16a34a;
+            --warn-bg: #fffbeb;
+            --warn-text: #b45309;
+            --warn-border: #fde68a;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -62,6 +64,15 @@
         #start-btn:hover { background-color: #1d4ed8; }
         #start-btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
         
+        #test-warning {
+            background-color: var(--warn-bg);
+            color: var(--warn-text);
+            border: 1px solid var(--warn-border);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -75,6 +86,7 @@
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 20px;
+            margin-bottom: 20px;
         }
         .card h2 {
             margin-top: 0;
@@ -106,6 +118,25 @@
             margin-bottom: 20px;
             display: none;
         }
+
+        /* Video Details Table */
+        #video-details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #video-details-table th, #video-details-table td {
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        #video-details-table th {
+            background-color: #f9fafb;
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+        .match { color: var(--success-color); font-weight: bold; }
+        .downgrade { color: var(--danger-color); font-weight: bold; }
+
     </style>
 </head>
 <body>
@@ -118,38 +149,44 @@
 
         <div class="status-bar">
             <span id="status-text">Ready to initialize.</span>
-            <button id="start-btn">Start Full Analysis (Wait for API)</button>
+            <button id="start-btn" disabled>Waiting for APIs...</button>
+        </div>
+        
+        <div id="test-warning">
+            <strong>Estimated Test Time: 4-5 minutes.</strong><br>
+            Please do not switch tabs or minimize the browser during the test, as this can throttle performance and invalidate the results.
         </div>
 
-        <!-- Video Player Container -->
         <div id="video-stage">
             <div id="yt-player"></div>
         </div>
 
         <div class="grid-2">
-            <!-- Speed Test Results -->
             <div class="card">
                 <h2>Speed & Latency (M-Lab NDT7)</h2>
                 <div id="speed-metrics">
                     <div class="metric-group">
-                        <div class="metric-label">Download</div>
+                        <div class="metric-label">Download (TCP)</div>
                         <span class="metric-value" id="dl-val">--</span> <span class="metric-unit">Mbps</span>
                     </div>
                     <div class="metric-group">
-                        <div class="metric-label">Upload</div>
+                        <div class="metric-label">Upload (TCP)</div>
                         <span class="metric-value" id="ul-val">--</span> <span class="metric-unit">Mbps</span>
                     </div>
                     <div class="metric-group">
-                        <div class="metric-label">Unloaded Latency</div>
+                        <div class="metric-label">Latency (TCP)</div>
                         <span class="metric-value" id="lat-val">--</span> <span class="metric-unit">ms</span>
                     </div>
                 </div>
             </div>
 
-            <!-- VoIP Results -->
             <div class="card">
                 <h2>Simulated Audio (VoIP) Quality</h2>
                 <div id="mos-metrics">
+                     <div class="metric-group">
+                        <div class="metric-label">Latency (WebRTC UDP)</div>
+                        <span class="metric-value" id="webrtc-lat-val">--</span> <span class="metric-unit">ms</span>
+                    </div>
                     <div class="metric-group">
                         <div class="metric-label">Mean Opinion Score (MoS)</div>
                         <span class="metric-value" id="mos-val">--</span> <span class="metric-unit">/ 5.0</span>
@@ -158,14 +195,30 @@
                         <div class="metric-label">R-Factor (ITU-T G.107)</div>
                         <span class="metric-value" id="r-val">--</span>
                     </div>
-                    <p><small><em>Simulation assumes best-case jitter/packet loss based on measured latency.</em></small></p>
+                    <p><small><em>Simulation based on <strong>WebRTC (UDP) latency</strong>. Assumes 0 jitter/packet loss.</em></small></p>
                 </div>
             </div>
         </div>
 
-        <!-- Video Chart -->
         <div class="card">
-            <h2>Video Experience Summary</h2>
+            <h2>Video Test Details</h2>
+            <table id="video-details-table">
+                <thead>
+                    <tr>
+                        <th>Requested</th>
+                        <th>Actual Played</th>
+                        <th>Startup (s)</th>
+                        <th>Rebuffers</th>
+                    </tr>
+                </thead>
+                <tbody id="video-details-body">
+                    <tr><td colspan="4"><i>Test not yet run.</i></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Video Experience Summary (Chart)</h2>
             <canvas id="videoChart" height="100"></canvas>
         </div>
     </div>
@@ -175,32 +228,31 @@
          * CONFIGURATION
          */
         const CONFIG = {
-            // Known 4K 60fps HDR test video
-            VIDEO_ID: '1La4QzGeaaQ',
-            // Duration to run each resolution test (seconds)
-            TEST_DURATION: 40,
-            // Number of speed test iterations to average
+            VIDEO_ID: '1La4QzGeaaQ', // 4K Test Video
+            TEST_DURATION: 40, // seconds per resolution
             SPEED_ITERATIONS: 2,
-            // Resolutions to cycle through
             RESOLUTIONS: [
                 { id: 'highres', name: '4K (2160p)' },
                 { id: 'hd1080', name: 'Full HD (1080p)' },
                 { id: 'hd720', name: 'HD (720p)' },
                 { id: 'large', name: 'SD (480p)' }
-            ]
+            ],
+            STUN_SERVER: 'stun:stun.l.google.com:19302'
         };
 
         /**
          * STATE MANAGEMENT
          */
         const state = {
-            player: null,
-            apiReady: false,
+            ytApiReady: false,
+            ndt7Ready: false,
             isRunning: false,
             results: {
                 video: [],
                 speed: { dl: [], ul: [], rtt: [] },
-                mos: null
+                mos: null,
+                webrtcLatency: null,
+                avgTcpLatency: null
             }
         };
 
@@ -213,17 +265,18 @@
             metrics: {
                 dl: document.getElementById('dl-val'),
                 ul: document.getElementById('ul-val'),
-                lat: document.getElementById('lat-val'),
+                tcpLat: document.getElementById('lat-val'),
+                webrtcLat: document.getElementById('webrtc-lat-val'),
                 mos: document.getElementById('mos-val'),
-                rMetrics: document.getElementById('r-val')
-            }
+                rFactor: document.getElementById('r-val')
+            },
+            videoTableBody: document.getElementById('video-details-body')
         };
 
         /**
          * INITIALIZATION & SAFEGUARDS
          */
         function init() {
-            // 1. Security Sandbox Check
             if (window.location.protocol === 'file:') {
                 showError("⚠️ SECURITY BLOCK: You are running this file directly from your computer.<br>Browsers block speed tests and advanced video APIs in this mode.<br><strong>Please deploy this file to a web server (localhost, GitHub Pages, Netlify, etc) to use it.</strong>");
                 ui.btn.disabled = true;
@@ -231,20 +284,46 @@
                 return;
             }
 
-            // 2. Load YouTube API
+            // Load YouTube API
             const tag = document.createElement('script');
             tag.src = "https://www.youtube.com/iframe_api";
             const firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            
+            // **FIX:** Start polling for the NDT7 script
+            checkNdt7Ready();
         }
 
-        // Global callback for YouTube API
+        // Callback for YouTube API
         window.onYouTubeIframeAPIReady = () => {
-            state.apiReady = true;
-            ui.status.innerText = "✓ APIs Loaded. Ready to start analysis.";
-            ui.btn.innerText = "Start Full Analysis";
-            ui.btn.addEventListener('click', runFullAnalysis);
+            state.ytApiReady = true;
+            tryToEnableButton();
         };
+
+        // **FIX:** Polling function for NDT7
+        function checkNdt7Ready() {
+            const interval = setInterval(() => {
+                if (typeof ndt7 !== 'undefined') {
+                    clearInterval(interval);
+                    state.ndt7Ready = true;
+                    tryToEnableButton();
+                }
+            }, 100); // Check every 100ms
+        }
+
+        // **FIX:** Central function to check all dependencies
+        function tryToEnableButton() {
+            if (state.ytApiReady && state.ndt7Ready) {
+                ui.status.innerText = "✓ All APIs Loaded. Ready to start analysis.";
+                ui.btn.innerText = "Start Full Analysis";
+                ui.btn.disabled = false;
+                ui.btn.addEventListener('click', runFullAnalysis);
+            } else if (state.ytApiReady) {
+                ui.status.innerText = "Waiting for Speed Test API...";
+            } else if (state.ndt7Ready) {
+                ui.status.innerText = "Waiting for YouTube API...";
+            }
+        }
 
         function showError(msg) {
             ui.error.innerHTML = msg;
@@ -264,30 +343,36 @@
                 // PHASE 1: VIDEO TESTS
                 for (let i = 0; i < CONFIG.RESOLUTIONS.length; i++) {
                     const res = CONFIG.RESOLUTIONS[i];
-                    updateStatus(`Testing Video Resolution: ${res.name} (${i+1}/${CONFIG.RESOLUTIONS.length})...`);
+                    updateStatus(`Testing Video: ${res.name} (${i+1}/${CONFIG.RESOLUTIONS.length})...`);
                     const result = await runVideoTest(res);
                     state.results.video.push(result);
                 }
-                if (state.player) state.player.destroy();
                 ui.stage.classList.remove('visible'); // Hide player
 
                 // PHASE 2: SPEED TESTS
                 for (let i = 1; i <= CONFIG.SPEED_ITERATIONS; i++) {
-                    updateStatus(`Running Speed Test Iteration ${i}/${CONFIG.SPEED_ITERATIONS}...`);
+                    updateStatus(`Running Speed Test ${i}/${CONFIG.SPEED_ITERATIONS}...`);
                     await runSpeedTestIteration();
                 }
                 finalizeSpeedResults();
 
-                // PHASE 3: MOS CALCULATION
-                updateStatus("Calculating VoIP MoS...");
-                calculateMos();
+                // PHASE 3: WebRTC LATENCY TEST (for MoS)
+                updateStatus("Testing WebRTC (UDP) Latency...");
+                state.results.webrtcLatency = await runWebRtcLatencyTest();
+                ui.metrics.webrtcLat.innerText = state.results.webrtcLatency.toFixed(0);
 
-                // PHASE 4: REPORTING
+                // PHASE 4: MOS CALCULATION
+                updateStatus("Calculating VoIP MoS...");
+                calculateMos(state.results.webrtcLatency); // Use WebRTC latency
+
+                // PHASE 5: REPORTING
                 updateStatus("Generating final report...");
+                renderVideoDetailsTable();
                 renderCharts();
                 updateStatus("✓ Analysis Complete.");
 
             } catch (e) {
+                console.error(e);
                 showError(`Analysis Failed: ${e.message}`);
                 updateStatus("Analysis terminated due to error.");
             } finally {
@@ -305,9 +390,11 @@
          * VIDEO TEST ENGINE (YouTube IFrame API)
          */
         function runVideoTest(resolutionConfig) {
+            // This function creates and destroys its own player instance
             return new Promise((resolve, reject) => {
                 let metrics = {
                     requested: resolutionConfig.name,
+                    requestedId: resolutionConfig.id,
                     actual: 'unknown',
                     startupTimeMs: 0,
                     rebufferCount: 0,
@@ -316,39 +403,48 @@
 
                 let testTimer = null;
                 let hasStarted = false;
+                let localPlayer = null;
 
-                // Initialize new player instance for each test to ensure clean state
-                state.player = new YT.Player('yt-player', {
+                localPlayer = new YT.Player('yt-player', {
                     height: '100%',
                     width: '100%',
                     videoId: CONFIG.VIDEO_ID,
                     playerVars: { 'autoplay': 1, 'controls': 0, 'mute': 1, 'playsinline': 1 },
                     events: {
-                        'onReady': (event) => {
-                            event.target.setPlaybackQuality(resolutionConfig.id);
-                            metrics.startTime = performance.now();
-                            // Some browsers block autoplay; force it.
-                            event.target.playVideo(); 
-                        },
-                        'onStateChange': (event) => {
-                            const pState = event.data;
-                            // YT.PlayerState.PLAYING = 1, BUFFERING = 3
-                            if (pState === 1 && !hasStarted) {
-                                hasStarted = true;
-                                metrics.startupTimeMs = performance.now() - metrics.startTime;
-                                // Start test duration timer once video actually plays
-                                testTimer = setTimeout(() => finish(), CONFIG.TEST_DURATION * 1000);
-                            } else if (pState === 3 && hasStarted) {
-                                metrics.rebufferCount++;
-                            }
-                        },
-                        'onError': (e) => reject(new Error(`Youtubeer Error Code: ${e.data}`))
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChange,
+                        'onError': onPlayerError
                     }
                 });
 
-                function finish() {
-                     if (state.player && typeof state.player.getPlaybackQuality === 'function') {
-                        metrics.actual = state.player.getPlaybackQuality();
+                function onPlayerReady(event) {
+                    event.target.setPlaybackQuality(resolutionConfig.id);
+                    metrics.startTime = performance.now();
+                    event.target.playVideo();
+                }
+
+                function onPlayerStateChange(event) {
+                    const pState = event.data;
+                    if (pState === YT.PlayerState.PLAYING && !hasStarted) {
+                        hasStarted = true;
+                        metrics.startupTimeMs = performance.now() - metrics.startTime;
+                        testTimer = setTimeout(finishTest, CONFIG.TEST_DURATION * 1000);
+                    } else if (pState === YT.PlayerState.BUFFERING && hasStarted) {
+                        metrics.rebufferCount++;
+                    }
+                }
+
+                function onPlayerError(e) {
+                    reject(new Error(`Youtubeer Error Code: ${e.data}`));
+                }
+
+                function finishTest() {
+                    clearTimeout(testTimer);
+                    if (localPlayer && typeof localPlayer.getPlaybackQuality === 'function') {
+                        metrics.actual = localPlayer.getPlaybackQuality();
+                    }
+                    if (localPlayer) {
+                        localPlayer.destroy();
                     }
                     resolve(metrics);
                 }
@@ -360,52 +456,112 @@
          */
         async function runSpeedTestIteration() {
              return new Promise((resolve) => {
-                // NDT7 is loaded globally via CDN script tag
+                // ndt7 object is guaranteed to exist here because of the fix
                 ndt7.test(
                     { userAcceptedDataPolicy: true },
                     {
                         serverChosen: (server) => { console.log('Connected to M-Lab node:', server.machine); },
                         downloadComplete: (data) => {
-                            state.results.speed.dl.push(data.mbps);
-                            state.results.speed.rtt.push(data.minRTT);
+                            if (data.mbps) state.results.speed.dl.push(data.mbps);
+                            if (data.minRTT) state.results.speed.rtt.push(data.minRTT);
                         },
                         uploadComplete: (data) => {
-                            state.results.speed.ul.push(data.mbps);
+                            if (data.mbps) state.results.speed.ul.push(data.mbps);
                         }
                     }
-                ).then((exitcode) => {
-                     resolve();
-                });
+                ).then(() => resolve());
              });
         }
 
         function finalizeSpeedResults() {
             const avg = arr => arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : 0;
             
-            // Calculate averages
             const finalDl = avg(state.results.speed.dl).toFixed(2);
             const finalUl = avg(state.results.speed.ul).toFixed(2);
-            // NDT7 sometimes returns RTT as null if it fails, filter those out
             const validRtts = state.results.speed.rtt.filter(r => r != null);
             const finalRtt = avg(validRtts).toFixed(0);
 
-            // Update UI
             ui.metrics.dl.innerText = finalDl;
             ui.metrics.ul.innerText = finalUl;
-            ui.metrics.lat.innerText = finalRtt;
+            ui.metrics.tcpLat.innerText = finalRtt;
 
-            // Store for MoS calculation
-            state.avgLatency = finalRtt;
+            state.results.avgTcpLatency = finalRtt;
         }
+        
+        /**
+         * NEW: WebRTC (UDP) LATENCY TEST
+         */
+        function runWebRtcLatencyTest() {
+            return new Promise((resolve, reject) => {
+                const pc = new RTCPeerConnection({ iceServers: [{ urls: CONFIG.STUN_SERVER }] });
+                const dc = pc.createDataChannel('latencyTest');
+                let startTime = 0;
+                
+                pc.onicecandidate = async (e) => {
+                    if (!e.candidate) {
+                        // All candidates gathered
+                        return;
+                    }
+
+                    // Once we get a candidate, we can check stats
+                    // Let's wait a moment for the connection to establish
+                    await new Promise(r => setTimeout(r, 1000));
+                    
+                    if (!pc.getStats) {
+                        reject(new Error("getStats() not supported."));
+                        return;
+                    }
+
+                    try {
+                        const stats = await pc.getStats();
+                        let finalRtt = null;
+                        
+                        stats.forEach(report => {
+                            // Find the 'candidate-pair' that is active
+                            if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                                finalRtt = report.currentRoundTripTime;
+                            }
+                        });
+                        
+                        if (finalRtt !== null) {
+                            resolve(finalRtt * 1000); // convert from seconds to ms
+                        } else {
+                            // Fallback if no succeeded pair is found yet
+                            stats.forEach(report => {
+                                if (report.type === 'remote-candidate') {
+                                    finalRtt = report.roundTripTime;
+                                }
+                            });
+                            if (finalRtt !== null) {
+                                resolve(finalRtt * 1000);
+                            } else {
+                                reject(new Error("Could not determine WebRTC RTT."));
+                            }
+                        }
+                    } catch (err) {
+                        reject(err);
+                    } finally {
+                        if (dc.readyState !== 'closed') dc.close();
+                        if (pc.signalingState !== 'closed') pc.close();
+                    }
+                };
+
+                // Create a dummy offer to trigger ICE gathering
+                pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                
+                // Timeout if it takes too long
+                setTimeout(() => {
+                    reject(new Error("WebRTC STUN connection timed out."));
+                }, 8000);
+            });
+        }
+
 
         /**
          * MOS SIMULATION ENGINE (ITU-T G.107 E-Model Simplified)
          */
-        function calculateMos() {
-            // Basic R-factor model based primarily on latency.
-            // Assumes 0% packet loss and <10ms jitter for a baseline "best case" scenario
-            // on this connection.
-            const latency = state.avgLatency || 50; // default to 50 if test failed
+        function calculateMos(latency) {
+            // Uses the provided latency (from WebRTC)
             const jitter = 0; 
             const packetLoss = 0;
 
@@ -416,10 +572,9 @@
              if (effectiveLatency < 177.3) {
                 Id = 0.024 * effectiveLatency;
             } else {
-                Id = 10 * (effectiveLatency - 177.3) - 6 * (effectiveLatency - 177.3) + 0.024 * effectiveLatency;
+                Id = (0.11 * (effectiveLatency - 177.3)) + (0.024 * effectiveLatency);
             }
 
-            // Packet loss impact (Ie)
             const Ie_eff = 0 + (95 - 0) * (packetLoss / (packetLoss + 10));
             
             let rFactor = R0 - Id - Ie_eff;
@@ -427,19 +582,45 @@
 
             // MoS Mapping
             let mos = 1.0;
-            if (rFactor > 80) {
-                mos = 4.0 + (rFactor - 80) * 0.05; // Scale 4.0 to 5.0
-            } else if (rFactor > 60) {
-                mos = 1.0 + rFactor * 0.035; // Scale approx 3.1 to 4.0
-            } // else remains 1.0 (poor)
+            if (rFactor < 60) {
+                 mos = 1 + 0.035 * rFactor; // 1.0 to 3.1
+            } else if (rFactor < 80) {
+                 mos = 3.1 + 0.045 * (rFactor - 60); // 3.1 to 4.0
+            } else {
+                 mos = 4.0 + 0.1 * (rFactor - 80); // 4.0 to 5.0
+            }
 
-            ui.metrics.rMetrics.innerText = rFactor.toFixed(1);
+            ui.metrics.rFactor.innerText = rFactor.toFixed(1);
             ui.metrics.mos.innerText = Math.min(5, Math.max(1, mos)).toFixed(2);
         }
 
         /**
          * VISUALIZATION (Chart.js)
          */
+         
+        function renderVideoDetailsTable() {
+            ui.videoTableBody.innerHTML = ""; // Clear placeholder
+            
+            state.results.video.forEach(v => {
+                const startupS = (v.startupTimeMs / 1000).toFixed(2);
+                
+                let qualityMatchClass = "match";
+                if (v.actual !== v.requestedId) {
+                    qualityMatchClass = "downgrade";
+                }
+                
+                const row = `
+                    <tr>
+                        <td>${v.requested}</td>
+                        <td class="${qualityMatchClass}">${v.actual}</td>
+                        <td>${startupS}</td>
+                        <td>${v.rebufferCount}</td>
+                    </tr>
+                `;
+                ui.videoTableBody.innerHTML += row;
+            });
+        }
+         
         function renderCharts() {
             const ctx = document.getElementById('videoChart').getContext('2d');
             new Chart(ctx, {
