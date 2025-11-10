@@ -3,613 +3,600 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browser Network Performance Agent</title>
-    <!-- Load required external libraries from reliable CDNs -->
+    <title>Internet Performance Agent + History</title>
+    <!-- 1. Chart.js for visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <!-- We load NDT7 asynchronously so we can race it against a timeout -->
+    <!-- 2. M-Lab NDT7 for speed testing (loaded async to prevent blocking) -->
     <script async src="https://unpkg.com/@m-lab/ndt7/dist/ndt7.min.js"></script>
+    
     <style>
         :root {
-            --bg-primary: #f0f2f5;
-            --text-primary: #1a1a1a;
-            --accent-color: #2563eb;
-            --danger-color: #dc2626;
-            --success-color: #16a34a;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --accent: #2563eb;     /* Blue */
+            --danger: #dc2626;     /* Red */
+            --success: #16a34a;    /* Green */
             --warn-bg: #fffbeb;
             --warn-text: #b45309;
-            --warn-border: #fde68a;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            margin: 0;
-            padding: 20px;
-            line-height: 1.5;
+            background: var(--bg); color: var(--text);
+            margin: 0; padding: 20px; line-height: 1.5;
         }
         .app-container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            max-width: 950px; margin: 0 auto;
         }
-        header {
-            margin-bottom: 30px;
-            border-bottom: 2px solid var(--bg-primary);
-            padding-bottom: 20px;
+        /* --- HEADER & CONTROLS --- */
+        .header-card {
+            background: var(--card-bg); padding: 25px; border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 20px;
         }
-        h1 { margin: 0; font-size: 1.8rem; }
-        .status-bar {
-            background: #e0f2fe;
-            color: #0369a1;
-            padding: 15px;
-            border-radius: 8px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .control-bar {
+            display: flex; gap: 15px; margin-top: 20px; align-items: center; flex-wrap: wrap;
         }
-        #start-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
+        .input-group { flex: 1; min-width: 250px; }
+        input[type="email"] {
+            width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;
+            font-size: 1rem; transition: border-color 0.2s;
         }
-        #start-btn:hover { background-color: #1d4ed8; }
-        #start-btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
-        
-        #test-warning {
-            background-color: var(--warn-bg);
-            color: var(--warn-text);
-            border: 1px solid var(--warn-border);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
+        input[type="email"]:focus { outline: none; border-color: var(--accent); }
+        .btn {
+            padding: 12px 24px; border: none; border-radius: 8px; font-weight: 700;
+            cursor: pointer; color: white; transition: opacity 0.2s;
         }
-        
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+        .btn-primary { background: var(--accent); }
+        .btn-secondary { background: #475569; }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .btn:hover:not(:disabled) { opacity: 0.9; }
+
+        /* --- NOTIFICATIONS --- */
+        #status-bar {
+            padding: 12px; background: #e0f2fe; color: #0369a1; border-radius: 8px;
+            font-weight: 600; margin-bottom: 15px;
         }
+        #warning-box {
+            background: var(--warn-bg); color: var(--warn-text); padding: 15px;
+            border-radius: 8px; border-left: 5px solid #f59e0b; margin-bottom: 20px;
+        }
+
+        /* --- LAYOUT GRID --- */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
         
         .card {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
+            background: var(--card-bg); padding: 20px; border-radius: 12px;
+            box-shadow: 0 2px 4px rgb(0 0 0 / 0.05); border: 1px solid #e2e8f0;
         }
-        .card h2 {
-            margin-top: 0;
-            font-size: 1.2rem;
-            color: #4b5563;
-            border-bottom: 1px solid #e5e7eb;
-            padding-bottom: 10px;
-        }
-        .metric-group { margin-bottom: 10px; }
-        .metric-label { font-weight: 600; color: #6b7280; font-size: 0.9rem; }
-        .metric-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
-        .metric-unit { font-size: 1rem; color: #6b7280; font-weight: normal; }
-        .disabled-metric { opacity: 0.5; }
+        h2 { margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; color: #334155; }
 
+        /* --- METRICS --- */
+        .metric { margin-bottom: 12px; }
+        .metric-label { font-size: 0.9rem; font-weight: 600; color: #64748b; }
+        .metric-val { font-size: 1.6rem; font-weight: 800; }
+        .metric-unit { color: #64748b; font-size: 1rem; }
+
+        /* --- VIDEO & TABLES --- */
         #video-stage {
-            background: #000;
-            width: 100%;
-            max-width: 640px;
-            height: 360px;
-            margin: 20px auto;
-            display: none; /* Hidden until test starts */
+            background: #000; height: 360px; max-width: 640px; margin: 20px auto;
+            display: none; /* Hidden by default */
         }
-        .visible { display: block !important; }
-        
-        #error-banner {
-            background-color: #fee2e2;
-            color: #991b1b;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
+        #video-stage.visible { display: block; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; color: #475569; }
+        .pass { color: var(--success); font-weight: bold; }
+        .fail { color: var(--danger); font-weight: bold; }
 
-        /* Video Details Table */
-        #video-details-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        #video-details-table th, #video-details-table td {
-            text-align: left;
-            padding: 8px 12px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        #video-details-table th {
-            background-color: #f9fafb;
-            font-size: 0.85rem;
-            color: #4b5563;
-        }
-        .match { color: var(--success-color); font-weight: bold; }
-        .downgrade { color: var(--danger-color); font-weight: bold; }
-
+        /* --- HISTORY SECTION --- */
+        #history-section { margin-top: 40px; opacity: 0.5; transition: opacity 0.3s; }
+        #history-section.active { opacity: 1.0; }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <div id="error-banner"></div>
-        <header>
-            <h1>🌐 Internet Performance Agent</h1>
-            <p>Standardized browser-based analysis of Video, Speed, and VoIP quality.</p>
-        </header>
-
-        <div class="status-bar">
-            <span id="status-text">Initializing...</span>
-            <button id="start-btn" disabled>Waiting for APIs...</button>
-        </div>
-        
-        <div id="test-warning">
-            <strong>Estimated Test Time: 4-5 minutes.</strong><br>
-            Please do not switch tabs or minimize the browser during the test, as this can throttle performance and invalidate the results.
+        <!-- HEADER & USER ID -->
+        <div class="header-card">
+            <h1 style="margin:0;">🚀 Internet Performance Agent</h1>
+            <p style="color: #64748b; margin-top: 5px;">Standardized analysis with historical tracking.</p>
+            
+            <div class="control-bar">
+                <div class="input-group">
+                    <input type="email" id="user-email" placeholder="Enter Email ID to track history (Required)" />
+                </div>
+                <button id="load-history-btn" class="btn btn-secondary" disabled>Load History</button>
+                <button id="start-btn" class="btn btn-primary" disabled>Initializing APIs...</button>
+            </div>
         </div>
 
-        <!-- Video Player Container -->
-        <div id="video-stage">
-            <div id="yt-player"></div>
+        <!-- STATUS & WARNINGS -->
+        <div id="status-bar">Waiting for subsystems...</div>
+        <div id="warning-box">
+            <strong>⚠️ Test Duration: ~4-5 Minutes</strong><br>
+            Do not switch tabs or minimize this window. Background throttling will invalidate results.
+        </div>
+
+        <!-- ACTIVE TEST STAGE -->
+        <div id="video-stage"><div id="yt-player"></div></div>
+
+        <!-- REAL-TIME RESULTS -->
+        <div class="grid-2">
+            <div class="card">
+                <h2 id="speed-title">Speed & Latency</h2>
+                <div class="metric"><span class="metric-label">Download</span><br><span id="dl-val" class="metric-val">--</span> <span class="metric-unit">Mbps</span></div>
+                <div class="metric" id="ul-wrapper"><span class="metric-label">Upload</span><br><span id="ul-val" class="metric-val">--</span> <span class="metric-unit">Mbps</span></div>
+                <div class="metric"><span class="metric-label">TCP Latency (Loaded)</span><br><span id="tcp-val" class="metric-val">--</span> <span class="metric-unit">ms</span></div>
+            </div>
+            <div class="card">
+                <h2>VoIP Quality (MoS)</h2>
+                <div class="metric"><span class="metric-label">UDP Latency (WebRTC)</span><br><span id="udp-val" class="metric-val">--</span> <span class="metric-unit">ms</span></div>
+                <div class="metric"><span class="metric-label">Mean Opinion Score</span><br><span id="mos-val" class="metric-val">--</span> <span class="metric-unit">/ 5.0</span></div>
+                <div class="metric"><span class="metric-label">R-Factor</span><br><span id="r-val" class="metric-val">--</span></div>
+            </div>
         </div>
 
         <div class="grid-2">
-            <!-- Speed Test Results -->
-            <div class="card">
-                <h2 id="speed-test-title">Speed & Latency (Mode: Auto)</h2>
-                <div id="speed-metrics">
-                    <div class="metric-group">
-                        <div class="metric-label">Download</div>
-                        <span class="metric-value" id="dl-val">--</span> <span class="metric-unit">Mbps</span>
-                    </div>
-                    <div class="metric-group" id="ul-metric-group">
-                        <div class="metric-label">Upload</div>
-                        <span class="metric-value" id="ul-val">--</span> <span class="metric-unit">Mbps</span>
-                    </div>
-                    <div class="metric-group">
-                        <div class="metric-label">Latency (TCP)</div>
-                        <span class="metric-value" id="lat-val">--</span> <span class="metric-unit">ms</span>
-                    </div>
-                </div>
+             <div class="card">
+                <h2>Video Details</h2>
+                <table id="video-table">
+                    <thead><tr><th>Quality</th><th>Played</th><th>Start(s)</th><th>Buf</th></tr></thead>
+                    <tbody><tr><td colspan="4" style="text-align:center; color:#999;">No data yet</td></tr></tbody>
+                </table>
             </div>
-
-            <!-- VoIP Results -->
             <div class="card">
-                <h2>Simulated Audio (VoIP) Quality</h2>
-                <div id="mos-metrics">
-                     <div class="metric-group">
-                        <div class="metric-label">Latency (WebRTC UDP)</div>
-                        <span class="metric-value" id="webrtc-lat-val">--</span> <span class="metric-unit">ms</span>
-                    </div>
-                    <div class="metric-group">
-                        <div class="metric-label">Mean Opinion Score (MoS)</div>
-                        <span class="metric-value" id="mos-val">--</span> <span class="metric-unit">/ 5.0</span>
-                    </div>
-                    <div class="metric-group">
-                        <div class="metric-label">R-Factor (ITU-T G.107)</div>
-                        <span class="metric-value" id="r-val">--</span>
-                    </div>
-                    <p><small><em>Simulation based on <strong>WebRTC (UDP) latency</strong>. Assumes 0 jitter/packet loss.</em></small></p>
-                </div>
+                <h2>Video Buffering</h2>
+                <canvas id="video-chart" height="150"></canvas>
             </div>
         </div>
 
-        <!-- Video Details Table -->
-        <div class="card">
-            <h2>Video Test Details</h2>
-            <table id="video-details-table">
-                <thead>
-                    <tr>
-                        <th>Requested</th>
-                        <th>Actual Played</th>
-                        <th>Startup (s)</th>
-                        <th>Rebuffers</th>
-                    </tr>
-                </thead>
-                <tbody id="video-details-body">
-                    <tr><td colspan="4"><i>Test not yet run.</i></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Video Chart -->
-        <div class="card">
-            <h2>Video Experience Summary (Chart)</h2>
-            <canvas id="videoChart" height="100"></canvas>
+        <!-- HISTORY SECTION -->
+        <div id="history-section" class="card">
+            <h2>📜 Historical Performance Runs</h2>
+            <div style="overflow-x: auto;">
+                <table id="history-table">
+                    <thead>
+                        <tr><th>Date</th><th>Email</th><th>DL (Mbps)</th><th>UL (Mbps)</th><th>UDP Latency</th><th>MoS</th></tr>
+                    </thead>
+                    <tbody id="history-body">
+                        <tr><td colspan="6" style="text-align:center; padding: 20px;">Enter an email above and click "Load History" to see past runs.</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <script>
-        /**
-         * CONFIGURATION
-         */
-        const CONFIG = {
-            VIDEO_ID: '1La4QzGeaaQ',
-            TEST_DURATION: 40,
-            SPEED_ITERATIONS: 2,
+    <!-- MAIN APP LOGIC (MODULE) -->
+    <script type="module">
+        // =========================================
+        // 1. FIREBASE SETUP (REPLACE IF DEPLOYING EXTERNALLY)
+        // =========================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ATTEMPT TO USE ENVIRONMENT CONFIG OR FALLBACK TO PLACEHOLDER
+        // IF YOU ARE DEPLOYING THIS YOURSELF, REPLACE THE OBJECT BELOW WITH YOUR OWN CONFIG.
+        const firebaseConfig = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : {
+            apiKey: "REPLACE_WITH_YOUR_KEY",
+            authDomain: "REPLACE_WITH_YOUR_PROJECT.firebaseapp.com",
+            projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
+            storageBucket: "REPLACE_WITH_YOUR_PROJECT.appspot.com",
+            messagingSenderId: "REPLACE_WITH_YOUR_SENDER_ID",
+            appId: "REPLACE_WITH_YOUR_APP_ID"
+        };
+        
+        // Initialize Firebase
+        let db, auth;
+        let isDbReady = false;
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            // Sign in anonymously to allow database access according to standard security rules
+            signInAnonymously(auth).then(() => {
+                console.log("Firebase: Authenticated anonymously for data access.");
+                isDbReady = true;
+                checkAllSystemsReady();
+            }).catch(e => console.error("Auth failed:", e));
+        } catch (e) {
+            console.error("Firebase init failed. History will not work.", e);
+            document.getElementById('status-bar').innerText = "⚠️ Database Error: History unavailable. (Check console)";
+        }
+
+        // Use specific app ID if available, or generic one for external deployments
+        const APP_ID = (typeof __app_id !== 'undefined') ? __app_id : 'perf-agent-public';
+        // Public path filtered by email is easiest for this use case
+        const DB_PATH = `artifacts/${APP_ID}/public/data/perf_history`;
+
+        // =========================================
+        // 2. AGENT CONFIGURATION
+        // =========================================
+        const CFG = {
+            VID_ID: '1La4QzGeaaQ', // 4K 60fps HDR test video
+            VID_DURATION: 40,      // Seconds per resolution
+            SPEED_ITERS: 2,        // Speed test iterations
             RESOLUTIONS: [
-                { id: 'highres', name: '4K (2160p)' },
-                { id: 'hd1080', name: 'Full HD (1080p)' },
-                { id: 'hd720', name: 'HD (720p)' },
-                { id: 'large', name: 'SD (480p)' }
+                {id: 'highres', label: '4K'},
+                {id: 'hd1080', label: '1080p'},
+                {id: 'hd720', label: '720p'},
+                {id: 'large', label: '480p'}
             ],
-            STUN_SERVER: 'stun:stun.l.google.com:19302',
-            NDT7_TIMEOUT_MS: 10000, // 10 seconds to wait for M-Lab API
-            CDN_TEST_FILE: 'https://proof.ovh.net/files/10Mb.dat' // Reliable 10MB test file
+            STUN: 'stun:stun.l.google.com:19302',
+            CDN_FILE: 'https://proof.ovh.net/files/10Mb.dat', // Fallback download file
+            NDT7_TIMEOUT: 8000 // Wait 8s for M-Lab API to load before fallback
         };
 
-        /**
-         * STATE MANAGEMENT
-         */
+        // =========================================
+        // 3. GLOBAL STATE & UI REFS
+        // =========================================
         const state = {
-            ytApiReady: false,
+            ytReady: false,
             ndt7Ready: false,
-            useFallbackSpeedTest: false,
-            isRunning: false,
-            results: {
-                video: [],
-                speed: { dl: [], ul: [], rtt: [] },
-                mos: null,
-                webrtcLatency: null
-            }
+            fallbackMode: false,
+            running: false,
+            data: resetData()
         };
 
-        // UI References
         const ui = {
-            status: document.getElementById('status-text'),
-            btn: document.getElementById('start-btn'),
+            email: document.getElementById('user-email'),
+            startBtn: document.getElementById('start-btn'),
+            histBtn: document.getElementById('load-history-btn'),
+            status: document.getElementById('status-bar'),
             stage: document.getElementById('video-stage'),
-            error: document.getElementById('error-banner'),
-            speedTitle: document.getElementById('speed-test-title'),
-            ulGroup: document.getElementById('ul-metric-group'),
-            metrics: {
-                dl: document.getElementById('dl-val'),
-                ul: document.getElementById('ul-val'),
-                tcpLat: document.getElementById('lat-val'),
-                webrtcLat: document.getElementById('webrtc-lat-val'),
-                mos: document.getElementById('mos-val'),
-                rFactor: document.getElementById('r-val')
-            },
-            videoTableBody: document.getElementById('video-details-body')
+            dl: document.getElementById('dl-val'),
+            ul: document.getElementById('ul-val'),
+            tcp: document.getElementById('tcp-val'),
+            udp: document.getElementById('udp-val'),
+            mos: document.getElementById('mos-val'),
+            rfac: document.getElementById('r-val'),
+            vTable: document.querySelector('#video-table tbody'),
+            hTable: document.getElementById('history-body'),
+            hSection: document.getElementById('history-section')
         };
 
-        /**
-         * INITIALIZATION & SMART FALLBACK
-         */
-        function init() {
-            if (window.location.protocol === 'file:') {
-                showError("⚠️ SECURITY BLOCK: You are running this file directly from your computer.<br>Please deploy to a web server.");
-                ui.btn.innerText = "Cannot Run Offline";
+        function resetData() {
+            return {
+                video: [],
+                speed: { dl: [], ul: [], tcp: [] },
+                udpLatency: 0,
+                mos: 0,
+                rFactor: 0
+            };
+        }
+
+        // =========================================
+        // 4. INITIALIZATION & DEPENDENCY CHECK
+        // =========================================
+        // Load YouTube API immediately
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.body.appendChild(tag);
+
+        // Poll for M-Lab NDT7 API
+        const ndt7Timer = setInterval(() => {
+            if (typeof ndt7 !== 'undefined') {
+                clearInterval(ndt7Timer);
+                state.ndt7Ready = true;
+                checkAllSystemsReady();
+            }
+        }, 250);
+
+        // Set timeout for M-Lab fallback
+        setTimeout(() => {
+            if (!state.ndt7Ready) {
+                clearInterval(ndt7Timer);
+                state.fallbackMode = true;
+                console.warn("M-Lab timeout. Switching to CDN fallback.");
+                checkAllSystemsReady();
+            }
+        }, CFG.NDT7_TIMEOUT);
+
+        // YouTube API Callback (needs to be on window)
+        window.onYouTubeIframeAPIReady = () => {
+            state.ytReady = true;
+            checkAllSystemsReady();
+        };
+
+        function checkAllSystemsReady() {
+            // We need YT API + (NDT7 API OR Fallback Mode) + Database Auth
+            if (state.ytReady && (state.ndt7Ready || state.fallbackMode) && isDbReady) {
+                ui.status.innerText = `✓ Systems Ready. Mode: ${state.fallbackMode ? 'Fallback (CDN)' : 'Full (M-Lab)'}`;
+                ui.startBtn.innerText = "Start Agent Run";
+                ui.startBtn.disabled = false;
+                ui.histBtn.disabled = false;
+            } else if (!isDbReady) {
+                 ui.status.innerText = "Waiting for Database connection...";
+            }
+        }
+
+        // =========================================
+        // 5. MAIN EVENT LISTENERS
+        // =========================================
+        ui.startBtn.addEventListener('click', async () => {
+            const email = ui.email.value.trim();
+            if (!email) {
+                alert("Please enter an Email ID first to track this run.");
+                ui.email.focus();
                 return;
             }
+            if (state.running) return;
 
-            // Load YT API
-            const tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            document.getElementsByTagName('script')[0].parentNode.insertBefore(tag, document.getElementsByTagName('script')[0]);
-
-            // Start the race: Polling vs. Timeout
-            ui.status.innerText = `Attempting to load M-Lab Speed Test API (${CONFIG.NDT7_TIMEOUT_MS/1000}s timeout)...`;
-            
-            const ndt7Poll = setInterval(() => {
-                if (typeof ndt7 !== 'undefined') {
-                    clearInterval(ndt7Poll);
-                    clearTimeout(ndt7Timeout);
-                    state.ndt7Ready = true;
-                    state.useFallbackSpeedTest = false;
-                    console.log("[Agent] M-Lab API loaded successfully.");
-                    tryToEnableButton();
-                }
-            }, 100);
-
-            const ndt7Timeout = setTimeout(() => {
-                clearInterval(ndt7Poll);
-                if (!state.ndt7Ready) {
-                    console.warn("[Agent] M-Lab API timed out. Switching to fallback mode.");
-                    state.useFallbackSpeedTest = true;
-                    // Update UI to reflect fallback mode
-                    ui.speedTitle.innerText = "Speed (Download Only - CDN Mode)";
-                    ui.ulGroup.classList.add('disabled-metric');
-                    ui.metrics.ul.innerText = "N/A";
-                    tryToEnableButton();
-                }
-            }, CONFIG.NDT7_TIMEOUT_MS);
-        }
-
-        window.onYouTubeIframeAPIReady = () => {
-            state.ytApiReady = true;
-            tryToEnableButton();
-        };
-
-        function tryToEnableButton() {
-            // We are ready if YT is ready AND (NDT7 is ready OR we decided to use fallback)
-            if (state.ytApiReady && (state.ndt7Ready || state.useFallbackSpeedTest)) {
-                const mode = state.useFallbackSpeedTest ? "Fallback (DL Only)" : "Full (M-Lab)";
-                ui.status.innerText = `✓ Ready. Mode: ${mode}`;
-                ui.btn.innerText = "Start Full Analysis";
-                ui.btn.disabled = false;
-                ui.btn.onclick = runFullAnalysis;
-            }
-        }
-
-        function showError(msg) {
-            ui.error.innerHTML = msg;
-            ui.error.style.display = 'block';
-        }
-
-        /**
-         * MAIN ANALYSIS ORCHESTRATOR
-         */
-        async function runFullAnalysis() {
-            if (state.isRunning) return;
-            state.isRunning = true;
-            ui.btn.disabled = true;
-            ui.stage.classList.add('visible');
+            // Reset and Start
+            state.running = true;
+            state.data = resetData();
+            ui.startBtn.disabled = true; ui.histBtn.disabled = true;
+            ui.status.style.background = "#e0f2fe"; // blue status
 
             try {
-                // PHASE 1: VIDEO TESTS
-                for (let i = 0; i < CONFIG.RESOLUTIONS.length; i++) {
-                    const res = CONFIG.RESOLUTIONS[i];
-                    updateStatus(`Testing Video: ${res.name} (${i+1}/${CONFIG.RESOLUTIONS.length})...`);
-                    const result = await runVideoTest(res);
-                    state.results.video.push(result);
+                // A. VIDEO TEST
+                ui.stage.classList.add('visible');
+                for (let i=0; i<CFG.RESOLUTIONS.length; i++) {
+                    setStatus(`Testing Video [${i+1}/4]: ${CFG.RESOLUTIONS[i].label}...`);
+                    state.data.video.push(await runVideoTest(CFG.RESOLUTIONS[i]));
                 }
                 ui.stage.classList.remove('visible');
 
-                // PHASE 2: SPEED TESTS (Smart Switching)
-                for (let i = 1; i <= CONFIG.SPEED_ITERATIONS; i++) {
-                    updateStatus(`Running Speed Test ${i}/${CONFIG.SPEED_ITERATIONS}...`);
-                    if (state.useFallbackSpeedTest) {
-                        await runFallbackSpeedTest();
-                    } else {
-                        await runMlabSpeedTest();
-                    }
+                // B. SPEED TEST
+                for (let i=1; i<=CFG.SPEED_ITERS; i++) {
+                    setStatus(`Testing Speed [Run ${i}/${CFG.SPEED_ITERS}]...`);
+                    if (state.fallbackMode) await runCdnSpeed();
+                    else await runMlabSpeed();
                 }
-                finalizeSpeedResults();
+                calcSpeedAverages();
 
-                // PHASE 3: WebRTC LATENCY TEST
-                updateStatus("Testing WebRTC (UDP) Latency...");
-                state.results.webrtcLatency = await runWebRtcLatencyTest();
-                ui.metrics.webrtcLat.innerText = state.results.webrtcLatency.toFixed(0);
+                // C. VOIP TEST
+                setStatus("Testing VoIP Latency (WebRTC)...");
+                state.data.udpLatency = await runUdpLatency();
+                ui.udp.innerText = state.data.udpLatency.toFixed(0);
+                
+                // D. CALCULATE MOS
+                setStatus("Calculating Quality Scores...");
+                calcMos(state.data.udpLatency);
 
-                // PHASE 4: MOS CALCULATION
-                updateStatus("Calculating VoIP MoS...");
-                calculateMos(state.results.webrtcLatency);
-
-                // PHASE 5: REPORTING
-                updateStatus("Generating final report...");
-                renderVideoDetailsTable();
+                // E. SAVE & RENDER
+                setStatus("Saving results to database...");
                 renderCharts();
-                updateStatus("✓ Analysis Complete.");
+                renderVideoTable();
+                await saveToFirestore(email);
+                
+                setStatus("✓ Run Complete! Results saved.");
+                ui.status.style.background = "#dcfce7"; // green success
+                // Auto-load history after a successful run
+                loadHistory(email);
 
-            } catch (e) {
-                console.error(e);
-                showError(`Analysis Failed: ${e.message}`);
-                updateStatus("Analysis terminated due to error.");
+            } catch (err) {
+                console.error(err);
+                setStatus("❌ Error: " + err.message);
+                ui.status.style.background = "#fee2e2"; // red error
             } finally {
-                state.isRunning = false;
-                ui.btn.innerText = "Analysis Finished (Refresh to re-run)";
+                state.running = false;
+                ui.startBtn.disabled = false;
+                ui.histBtn.disabled = false;
+                ui.startBtn.innerText = "Start New Run";
             }
-        }
+        });
 
-        function updateStatus(msg) {
-            ui.status.innerText = msg;
-        }
+        ui.histBtn.addEventListener('click', () => {
+             const email = ui.email.value.trim();
+             if(email) loadHistory(email);
+             else { alert("Enter email to load history."); ui.email.focus(); }
+        });
 
-        /**
-         * VIDEO TEST ENGINE
-         */
-        function runVideoTest(resolutionConfig) {
-            return new Promise((resolve, reject) => {
-                let metrics = {
-                    requested: resolutionConfig.name,
-                    requestedId: resolutionConfig.id,
-                    actual: 'unknown',
-                    startupTimeMs: 0,
-                    rebufferCount: 0,
-                    startTime: 0
-                };
-                let testTimer = null;
-                let hasStarted = false;
-                let localPlayer = new YT.Player('yt-player', {
-                    height: '100%', width: '100%', videoId: CONFIG.VIDEO_ID,
-                    playerVars: { 'autoplay': 1, 'controls': 0, 'mute': 1, 'playsinline': 1 },
+        function setStatus(msg) { ui.status.innerText = msg; }
+
+        // =========================================
+        // 6. TEST MODULES
+        // =========================================
+        // --- A. YouTube Test ---
+        function runVideoTest(resCfg) {
+            return new Promise((resolve) => {
+                let m = { req: resCfg.label, reqId: resCfg.id, act: '?', start: 0, buf: 0 };
+                let timer, started = false;
+                
+                // Create fresh player for each resolution to ensure clean state
+                let player = new YT.Player('yt-player', {
+                    height: '100%', width: '100%', videoId: CFG.VID_ID,
+                    playerVars: { 'autoplay':1, 'mute':1, 'controls':0, 'playsinline':1, 'vq': resCfg.id },
                     events: {
                         'onReady': (e) => {
-                            e.target.setPlaybackQuality(resolutionConfig.id);
-                            metrics.startTime = performance.now();
+                            e.target.setPlaybackQuality(resCfg.id);
+                            m.t0 = performance.now();
                             e.target.playVideo();
                         },
                         'onStateChange': (e) => {
-                            if (e.data === YT.PlayerState.PLAYING && !hasStarted) {
-                                hasStarted = true;
-                                metrics.startupTimeMs = performance.now() - metrics.startTime;
-                                testTimer = setTimeout(finish, CONFIG.TEST_DURATION * 1000);
-                            } else if (e.data === YT.PlayerState.BUFFERING && hasStarted) {
-                                metrics.rebufferCount++;
+                            if (e.data === 1 && !started) { // Playing
+                                started = true;
+                                m.start = performance.now() - m.t0;
+                                timer = setTimeout(finish, CFG.VID_DURATION * 1000);
+                            } else if (e.data === 3 && started) { // Buffering
+                                m.buf++;
                             }
-                        },
-                        'onError': (e) => reject(new Error(`Youtubeer Error: ${e.data}`))
+                        }
                     }
                 });
                 function finish() {
-                    clearTimeout(testTimer);
-                    if (localPlayer && typeof localPlayer.getPlaybackQuality === 'function') {
-                        metrics.actual = localPlayer.getPlaybackQuality();
-                    }
-                    localPlayer.destroy();
-                    resolve(metrics);
+                    if(player.getPlaybackQuality) m.act = player.getPlaybackQuality();
+                    player.destroy();
+                    resolve(m);
                 }
             });
         }
 
-        /**
-         * SPEED TEST ENGINE (DUAL MODE)
-         */
-        async function runMlabSpeedTest() {
-             return new Promise((resolve) => {
+        // --- B. Speed Tests ---
+        async function runMlabSpeed() {
+            return new Promise(resolve => {
                 ndt7.test(
                     { userAcceptedDataPolicy: true },
                     {
-                        downloadComplete: (data) => {
-                            if (data.mbps) state.results.speed.dl.push(data.mbps);
-                            if (data.minRTT) state.results.speed.rtt.push(data.minRTT);
-                        },
-                        uploadComplete: (data) => {
-                            if (data.mbps) state.results.speed.ul.push(data.mbps);
-                        }
+                        downloadComplete: (d) => { state.data.speed.dl.push(d.mbps); state.data.speed.tcp.push(d.minRTT); },
+                        uploadComplete: (u) => { state.data.speed.ul.push(u.mbps); }
                     }
-                ).then(() => resolve());
-             });
+                ).then(resolve);
+            });
+        }
+        async function runCdnSpeed() {
+             // Simple Fallback: DL only, HEAD request for TCP latency
+             try {
+                 let t0 = performance.now();
+                 await fetch(CFG.CDN_FILE + "?t=" + Date.now(), {method: 'HEAD', mode: 'no-cors'});
+                 state.data.speed.tcp.push(performance.now() - t0);
+
+                 t0 = performance.now();
+                 const resp = await fetch(CFG.CDN_FILE + "?t=" + Date.now());
+                 const blob = await resp.blob();
+                 const sec = (performance.now() - t0) / 1000;
+                 state.data.speed.dl.push((blob.size * 8 / sec) / 1e6);
+             } catch(e) { console.warn("CDN test failed", e); }
+        }
+        function calcSpeedAverages() {
+            const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+            ui.dl.innerText = avg(state.data.speed.dl).toFixed(2);
+            ui.ul.innerText = state.fallbackMode ? 'N/A' : avg(state.data.speed.ul).toFixed(2);
+            ui.tcp.innerText = avg(state.data.speed.tcp).toFixed(0);
         }
 
-        async function runFallbackSpeedTest() {
-            // 1. Latency Test (TCP approximation using a HEAD request)
-            try {
-                const start = performance.now();
-                await fetch(CONFIG.CDN_TEST_FILE + '?t=' + Date.now(), { method: 'HEAD', mode: 'no-cors' });
-                const end = performance.now();
-                state.results.speed.rtt.push(end - start);
-            } catch (e) { console.warn("Fallback latency test failed", e); }
-
-            // 2. Download Test
-            return new Promise((resolve, reject) => {
-                const startTime = performance.now();
-                // Fetch as a blob to ensure we download the whole thing
-                fetch(CONFIG.CDN_TEST_FILE + '?t=' + Date.now())
-                    .then(response => {
-                        if (!response.ok) throw new Error("CDN download failed");
-                        return response.blob();
-                    })
-                    .then(blob => {
-                        const endTime = performance.now();
-                        const durationSec = (endTime - startTime) / 1000;
-                        const bits = blob.size * 8;
-                        const mbps = (bits / durationSec) / 1_000_000;
-                        state.results.speed.dl.push(mbps);
-                        resolve();
-                    })
-                    .catch(e => {
-                        console.error("Fallback DL failed", e);
-                        resolve(); // Resolve anyway to continue the test suite
-                    });
+        // --- C. WebRTC Latency ---
+        async function runUdpLatency() {
+            return new Promise(resolve => {
+                let pc = new RTCPeerConnection({iceServers:[{urls:CFG.STUN}]});
+                pc.createDataChannel('x'); // Trigger ICE
+                pc.onicecandidate = (e) => {
+                    if(!e.candidate) return;
+                    setTimeout(async () => { // Wait for Candidate Pair
+                        try {
+                            const stats = await pc.getStats();
+                            let rtt = 50; // Default if not found
+                            stats.forEach(r => {
+                                if(r.type === 'candidate-pair' && r.currentRoundTripTime) rtt = r.currentRoundTripTime * 1000;
+                            });
+                            pc.close(); resolve(rtt);
+                        } catch(e) { pc.close(); resolve(50); }
+                    }, 1000);
+                };
+                pc.createOffer().then(o => pc.setLocalDescription(o));
+                setTimeout(() => { pc.close(); resolve(50); }, 5000); // Timeout
             });
         }
 
-        function finalizeSpeedResults() {
-            const avg = arr => arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : 0;
-            ui.metrics.dl.innerText = avg(state.results.speed.dl).toFixed(2);
-            ui.metrics.tcpLat.innerText = avg(state.results.speed.rtt).toFixed(0);
+        // --- D. MoS Calc ---
+        function calcMos(lat) {
+            // ITU-T G.107 E-model simplified for latency only
+            const R0 = 93.2, effLat = lat + 10; // +10ms codec delay
+            let Id = effLat < 177.3 ? 0.024 * effLat : (0.11 * (effLat - 177.3)) + (0.024 * effLat);
+            let R = Math.max(0, Math.min(100, R0 - Id));
+            let mos = R < 60 ? 1 + 0.035*R : (R < 80 ? 3.1 + 0.045*(R-60) : 4.0 + 0.1*(R-80));
             
-            if (!state.useFallbackSpeedTest) {
-                 ui.metrics.ul.innerText = avg(state.results.speed.ul).toFixed(2);
+            state.data.mos = Math.min(5, Math.max(1, mos));
+            state.data.rFactor = R;
+            ui.mos.innerText = state.data.mos.toFixed(2);
+            ui.rfac.innerText = R.toFixed(1);
+        }
+
+        // =========================================
+        // 7. DATABASE & HISTORY
+        // =========================================
+        async function saveToFirestore(email) {
+            if (!isDbReady) return;
+            const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+            
+            const docData = {
+                email: email,
+                timestamp: Timestamp.now(),
+                dl_mbps: Number(avg(state.data.speed.dl).toFixed(2)),
+                ul_mbps: state.fallbackMode ? null : Number(avg(state.data.speed.ul).toFixed(2)),
+                udp_latency_ms: Math.round(state.data.udpLatency),
+                mos_score: Number(state.data.mos.toFixed(2)),
+                video_rebuffers_total: state.data.video.reduce((sum, v) => sum + v.buf, 0)
+            };
+            
+            try {
+                await addDoc(collection(db, DB_PATH), docData);
+                console.log("Data saved to:", DB_PATH);
+            } catch(e) {
+                console.error("Save failed:", e);
+                throw new Error("Could not save to database. Check permissions.");
             }
         }
 
-        /**
-         * WebRTC & MOS ENGINE
-         */
-        function runWebRtcLatencyTest() {
-            return new Promise((resolve, reject) => {
-                const pc = new RTCPeerConnection({ iceServers: [{ urls: CONFIG.STUN_SERVER }] });
-                pc.createDataChannel('latencyTest'); // Trigger ICE
+        async function loadHistory(email) {
+            if (!isDbReady) return;
+            setStatus(`Loading history for ${email}...`);
+            ui.hSection.classList.add('active');
+            ui.hTable.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading...</td></tr>';
+
+            try {
+                // Simple query: filter by email, sort by time.
+                // NOTE: This might require a composite index in Firestore. 
+                // If it fails in console, click the link provided in the console error to create it.
+                const q = query(
+                    collection(db, DB_PATH), 
+                    where("email", "==", email),
+                    orderBy("timestamp", "desc")
+                );
+                const snap = await getDocs(q);
                 
-                pc.onicecandidate = async (e) => {
-                    if (!e.candidate) return;
-                    // Wait briefly for connection to settle
-                    await new Promise(r => setTimeout(r, 1500));
-                    try {
-                        const stats = await pc.getStats();
-                        let rtt = null;
-                        stats.forEach(r => {
-                            if (r.type === 'candidate-pair' && r.state === 'succeeded' && r.currentRoundTripTime) {
-                                rtt = r.currentRoundTripTime;
-                            }
-                        });
-                        // If no succeeded pair rtt, try any active pair
-                         if (rtt === null) {
-                            stats.forEach(r => {
-                                if (r.type === 'candidate-pair' && r.currentRoundTripTime) {
-                                    rtt = r.currentRoundTripTime;
-                                }
-                            });
-                        }
-                        
-                        if (rtt !== null) resolve(rtt * 1000);
-                        else resolve(50); // Safe fallback if WebRTC fails silently
-                    } catch (err) { resolve(50); } 
-                    finally { pc.close(); }
-                };
-                pc.createOffer().then(o => pc.setLocalDescription(o));
-                setTimeout(() => resolve(50), 5000); // Hard timeout
-            });
-        }
+                if (snap.empty) {
+                    ui.hTable.innerHTML = '<tr><td colspan="6" style="text-align:center;">No past runs found for this email.</td></tr>';
+                    setStatus("Ready.");
+                    return;
+                }
 
-        function calculateMos(latency) {
-            // Simplified E-model based on latency (assumes 0 jitter/loss for best case)
-            const R0 = 93.2;
-            const effectiveLatency = latency + 10; // +10ms codec delay
-            let Id = (effectiveLatency < 177.3) ? (0.024 * effectiveLatency) : ((0.11 * (effectiveLatency - 177.3)) + (0.024 * effectiveLatency));
-            let rFactor = Math.max(0, Math.min(100, R0 - Id));
-            let mos = 1.0;
-            if (rFactor < 60) mos = 1 + 0.035 * rFactor;
-            else if (rFactor < 80) mos = 3.1 + 0.045 * (rFactor - 60);
-            else mos = 4.0 + 0.1 * (rFactor - 80);
-            
-            ui.metrics.rFactor.innerText = rFactor.toFixed(1);
-            ui.metrics.mos.innerText = Math.min(5, Math.max(1, mos)).toFixed(2);
-        }
-
-        /**
-         * VISUALIZATION
-         */
-        function renderVideoDetailsTable() {
-            ui.videoTableBody.innerHTML = "";
-            state.results.video.forEach(v => {
-                const cssClass = (v.actual !== v.requestedId) ? "downgrade" : "match";
-                ui.videoTableBody.innerHTML += `
-                    <tr>
-                        <td>${v.requested}</td>
-                        <td class="${cssClass}">${v.actual}</td>
-                        <td>${(v.startupTimeMs / 1000).toFixed(2)}</td>
-                        <td>${v.rebufferCount}</td>
+                let html = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const dateStr = d.timestamp && d.timestamp.toDate ? d.timestamp.toDate().toLocaleString() : 'N/A';
+                    html += `<tr>
+                        <td>${dateStr}</td>
+                        <td>${d.email}</td>
+                        <td>${d.dl_mbps || '--'}</td>
+                        <td>${d.ul_mbps || '--'}</td>
+                        <td>${d.udp_latency_ms || '--'}</td>
+                        <td style="font-weight:bold; color:${d.mos_score >= 4.0 ? 'var(--success)' : (d.mos_score < 3.0 ? 'var(--danger)' : 'inherit')}">${d.mos_score || '--'}</td>
                     </tr>`;
+                });
+                ui.hTable.innerHTML = html;
+                setStatus(`Loaded ${snap.size} past runs.`);
+
+            } catch (e) {
+                console.error("History load error:", e);
+                ui.hTable.innerHTML = `<tr><td colspan="6" style="color:var(--danger)">Error loading history. See console. (May need Firestore Index)</td></tr>`;
+                setStatus("Error loading history.");
+            }
+        }
+
+        // =========================================
+        // 8. RENDERING UTILS
+        // =========================================
+        function renderVideoTable() {
+            ui.vTable.innerHTML = '';
+            state.data.video.forEach(v => {
+                 const isMatch = v.act === v.reqId || (v.reqId==='highres' && v.act==='hd2160');
+                 ui.vTable.innerHTML += `<tr>
+                    <td>${v.req}</td>
+                    <td class="${isMatch?'pass':'fail'}">${v.act||'unknown'}</td>
+                    <td>${(v.start/1000).toFixed(2)}s</td>
+                    <td class="${v.buf>0?'fail':'pass'}">${v.buf}</td>
+                 </tr>`;
             });
         }
 
+        let chartInstance = null;
         function renderCharts() {
-            new Chart(document.getElementById('videoChart').getContext('2d'), {
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(document.getElementById('video-chart'), {
                 type: 'bar',
                 data: {
-                    labels: state.results.video.map(v => v.requested),
-                    datasets: [
-                        { label: 'Startup (s)', data: state.results.video.map(v => (v.startupTimeMs/1000).toFixed(2)), backgroundColor: 'rgba(37,99,235,0.7)', yAxisID: 'y' },
-                        { label: 'Rebuffers', type: 'line', data: state.results.video.map(v => v.rebufferCount), borderColor: '#dc2626', backgroundColor: '#dc2626', yAxisID: 'y1' }
-                    ]
+                    labels: state.data.video.map(v => v.req),
+                    datasets: [{
+                        label: 'Rebuffer Events',
+                        data: state.data.video.map(v => v.buf),
+                        backgroundColor: state.data.video.map(v => v.buf > 0 ? '#dc2626' : '#16a34a')
+                    }]
                 },
-                options: {
-                    responsive: true, interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        y: { title: { display: true, text: 'Startup Time (s)' }, beginAtZero: true },
-                        y1: { position: 'right', title: { display: true, text: 'Count' }, beginAtZero: true, grid: { drawOnChartArea: false } }
-                    }
-                }
+                options: { plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{stepSize:1}}} }
             });
         }
-
-        init();
     </script>
 </body>
 </html>
