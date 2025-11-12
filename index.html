@@ -11,8 +11,6 @@
         .results-grid { display: grid; grid-template-columns: 150px 1fr; gap: 5px; }
         .results-grid span { font-weight: bold; }
         #voip-status { font-style: italic; color: #555; }
-        
-        /* The #library-errors style has been removed */
     </style>
 </head>
 <body>
@@ -73,10 +71,1054 @@
     </div>
 
 
-    <script src="https://unpkg.com/@m-lab/ndt7-js@0.9.0/dist/ndt7.js"></script>
-    
-    <script src="https://unpkg.com/webrtc-adapter@9.0.3/out/adapter.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/janus-gateway/1.1.5/janus.js"></script>
+    <script>
+      !function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.ndt7=t():e.ndt7=t()}(this,(function(){return function(e){var t={};function n(r){if(t[r])return t[r].exports;var o=t[r]={i:r,l:!1,exports:{}};return e[r].call(o.exports,o,o.exports,n),o.l=!0,o.exports}return n.m=e,n.c=t,n.d=function(e,t,r){n.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:r})},n.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,{__esModule:!0})},n.t=function(e,t){if(1&t&&(e=n(e)),8&t)return e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var r=Object.create(null);if(n.r(r),Object.defineProperty(r,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof e)for(var o in e)n.d(r,o,function(t){return e[t]}.bind(null,o));return r},n.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return n.d(t,"a",t),t},n.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},n.p="",n(n.s=0)}([function(e,t,n){"use strict";var r=this&&this.__awaiter||function(e,t,n,r){return new(n||(n=Promise))((function(o,i){function a(e){try{c(r.next(e))}catch(e){i(e)}}function s(e){try{c(r.throw(e))}catch(e){i(e)}}function c(e){e.done?o(e.value):new n((function(t){t(e.value)})).then(a,s)}c((r=r.apply(e,t||[])).next())}))},o=this&&this.__generator||function(e,t){var n,r,o,i,a={label:0,sent:function(){if(1&o[0])throw o[1];return o[1]},trys:[],ops:[]};return i={next:s(0),throw:s(1),return:s(2)},"function"==typeof Symbol&&(i[Symbol.iterator]=function(){return this}),i;function s(i){return function(s){return function(i){if(n)throw new TypeError("Generator is already executing.");for(;a;)try{if(n=1,r&&(o=2&i[0]?r.return:i[0]?r.throw||((o=r.return)&&o.call(r),0):r.next)&&!(o=o.call(r,i[1])).done)return o;switch(r=0,o&&(i=[2&i[0],o.value]),i[0]){case 0:case 1:o=i;break;case 4:a.label++,a.sent=a.ops[a.label]=i[1],a.ops.pop();break;case 5:a.label++,n=i[1],i=[0];break;case 7:a.ops.pop(),a.trys.pop();break;default:if(!(o=(o=a.trys).length>0&&o[o.length-1])&&(6===i[0]||2===i[0])){a=0;continue}if(3===i[0]&&(!o||i[1]>o[0]&&i[1]<o[3])){a.label=i[1];break}if(6===i[0]&&a.label<o[1]){a.label=o[1],o=i;break}if(o&&a.label<o[2]){a.label=o[2],a.ops.push(i);break}o[2]&&a.ops.pop(),a.trys.pop()}continue}i=t.call(e,i),a.ops.push(i)}catch(e){i=[6,e],n=0}finally{n=o=0}if(5&i[0])throw i[1];return{value:i[0]?i[1]:void 0,done:!0}}([i,s])}}};Object.defineProperty(t,"__esModule",{value:!0});var i={protocol:"wss",hostname:"locate.measurementlab.net",port:443,path:"/v2/nearest/ndt/ndt7"},a="ndt-v7",s=16777216,c={debug:void 0,error:void 0,warn:void 0},u=function(){function e(e){var t=this;this.config=Object.assign({metadata:{},userAcceptedDataPolicy:!1},e||{});var n=this.config.server||{};this.config.server=Object.assign({},i,n),["debug","error","warn"].forEach((function(e){c[e]=function(){for(var n,r=[],o=0;o<arguments.length;o++)r[o]=arguments[o];!1===(null===(n=t.config)||void 0===n?void 0:n.quiet)&&console[e].apply(console,r)}."function"==typeof(null==e?void 0:e[t.config.verbosity])&&(c[e]=t.config.verbosity[e])}))}return e.prototype.start=function(){var e,t,n,i,s;return r(this,void 0,void 0,(function(){var r,u,l,f,p,d,h,g,v,m,y;return o(this,(function(o){switch(o.label){case 0:return r={},u={},l={},[4,this.findServer()];case 1:return f=o.sent(),this.config.server=Object.assign({},this.config.server,f),[4,this.download()];case 2:return p=o.sent(),d=this.config.server,h=d.hostname,g=d.port,this.url=new URL(p),this.url.protocol="wss:",this.url.hostname=h||this.url.hostname,this.url.port=String(g||this.url.port),this.url.searchParams.set("client_name","ndt7-js"),this.url.searchParams.set("client_version",this.version()),Object.assign(r,null===(e=p.websocket)||void 0===e?void 0:e.summary,null===(t=p.tcpinfo)||void 0===t?void 0:t.summary),Object.assign(u,null===(n=p.websocket)||void 0===n?void 0:n.results,null===(i=p.tcpinfo)||void 0===i?void 0:i.results),Object.assign(l,null===p||void 0===p?void 0:p.latency),[4,this.upload()];case 3:return v=o.sent(),Object.assign(r,null===(m=v.websocket)||void 0===m?void 0:m.summary,null===(y=v.tcpinfo)||void 0===y?void 0:y.summary),Object.assign(u,v.results),this.summary={download:p.summary,upload:v.summary,latency:l,server:this.config.server,url:this.url,results:u,raw:r},c.debug("NDT7 summary",this.summary),this.summary.results.forEach((function(e){var t;null===(t=e.Origin)||(t.IsSender||(e.Data=void 0))})),[2,this.summary]}}))}))},e.prototype.findServer=function(e){return r(this,void 0,void 0,(function(){var t,n,r;return o(this,(function(o){switch(o.label){case 0:return c.debug("locating server: ".concat(JSON.stringify(this.config.server))),t="".concat(this.config.server.protocol,"//").concat(this.config.server.hostname,":").concat(this.config.server.port).concat(this.config.server.path),e&&(t+="?".concat(new URLSearchParams(e))),[4,fetch(t)];case 1:return n=o.sent(),[4,n.json()];case 2:return(r=o.sent()).results&&r.results.length?(c.debug("located server: ".concat(JSON.stringify(r.results[0]))),r.results[0]):(c.warn("could not locate server: ".concat(JSON.stringify(r))),this.config.server)}))}))},e.prototype.download=function(){return this.test("download","receive")},e.prototype.upload=function(){return this.test("upload","send")},e.prototype.version=function(){try{return n(1).version}catch(e){return"v0.0.0"}},e.prototype.test=function(e,t){var n=this;return r(this,void 0,void 0,(function(){var r,i,c;return o(this,(function(o){switch(o.label){case 0:if(r=Object.assign({},this.config.server),!r.paths){var u,l,f,p;try{r.paths={},r.paths.download=(null===(u=this.config.server)||void 0===u?void 0:u.urls["".concat(this.config.server.protocol.replace("http","ws"),"://").concat(this.config.server.machine,"/ndt/v7/download")]),r.paths.upload=(null===(l=this.config.server)||void 0===l?void 0:l.urls["".concat(this.config.server.protocol.replace("http","ws"),"://").concat(this.config.server.machine,"/ndt/v7/upload")])}catch(e){c.debug("no server.urls",e),r.paths.download=(null===(f=this.config.server.urls)||void 0===f?void 0:f["wss:///ndt/v7/download"]),r.paths.upload=(null===(p=this.config.server.urls)||void 0===p?void 0:p["wss:///ndt/v7/upload"])}}return this.url=this.parseUrl("".concat(r.protocol,"//").concat(r.hostname,":").concat(r.port).concat(r.paths[e])),[4,new Promise((function(o,i){var u;n.makeWebsocket(n.url.toString(),a).then((function(r){var a,l={},f={},p={},d={throughput:{unit:"Mbit/s"}},h=0,g=0,v=0,m=performance.now(),y=(null===(u=n.config.callbacks)||void 0===u?void 0:u.onresult)||function(){};r.onopen=function(t){m=performance.now(),c.debug("".concat(e,".onopen"),t),l[e]={start_time:m,count:0,bytes:0,last_bytes:0,last_time:m},f[e]=[],p[e]=[],n.config.callbacks&&n.config.callbacks.onstart&&n.config.callbacks.onstart({kind:e,time:m})},"download"===e?r.onmessage=function(t){h+=t.data.length,v+=1;var r=performance.now(),o=r-m;if(n.config.callbacks&&n.config.callbacks.onmeasurement)try{var i={kind:e,time:r,count:v,bytes:h,elapsed:o/1e3};"string"==typeof t.data?i.origin="text":(i.measurement=JSON.parse(t.data),i.origin="server",f[e].push(i),y(i)),n.config.callbacks.onmeasurement(i)}catch(e){c.warn("error in download.onmeasurement callback",e)}if(o>250){var a=h-g;d.throughput.value=8*a/o*1e3/1e6,n.config.callbacks&&n.config.callbacks.onprogress&&n.config.callbacks.onprogress({kind:e,time:r,count:v,bytes:h,elapsed:o/1e3,throughput:d.throughput}),g=h,m=r}}:(a=new Uint8Array(s),function o(){if(r.bufferedAmount>s)return void setTimeout(o,10);for(var i=performance.now();r.bufferedAmount<=s;){r.send(a),h+=a.length,v+=1;var u=i-m;if(n.config.callbacks&&n.config.callbacks.onmeasurement)try{var l={kind:e,time:i,count:v,bytes:h,elapsed:u/1e3};n.config.callbacks.onmeasurement(l)}catch(e){c.warn("error in upload.onmeasurement callback",e)}if(u>250){var f=h-g;d.throughput.value=8*f/u*1e3/1e6,n.config.callbacks&&n.config.callbacks.onprogress&&n.config.callbacks.onprogress({kind:e,time:i,count:v,bytes:h,elapsed:u/1e3,throughput:d.throughput}),g=h,m=i;break}}setTimeout(o,0)}()),r.onclose=function(t){c.debug("".concat(e,".onclose"),t);var a=performance.now(),s=a-l[e].start_time;l[e].end_time=a,l[e].elapsed=s,l[e].throughput=8*h/s*1e3/1e6,r.latency&&Object.assign(p,r.latency),n.config.callbacks&&n.config.callbacks.oncomplete&&n.config.callbacks.oncomplete({kind:e,time:a,count:v,bytes:h,elapsed:s/1e3,throughput:{value:l[e].throughput,unit:"Mbit/s"}}),o({summary:l,results:f,latency:p,tcpinfo:r.tcpInfo,websocket:r.websocketInfo})},r.onerror=function(t){c.warn("".concat(e,".onerror"),t),i(new Error("".concat(e," test failed: ").concat(t.type)))}})).catch((function(e){c.error(e),i(e)})))}];case 1:return i=o.sent(),(c=i.tcpinfo)&&(i.tcpinfo.summary=n.parseSummary(c,"tcpinfo")),(c=i.websocket)&&(i.websocket.summary=n.parseSummary(c,"websocket")),[2,i]}}))}))},e.prototype.parseUrl=function(e){var t=new URL(e);return t.searchParams.set("client_name","ndt7-js"),t.searchParams.set("client_version",this.version()),t.searchParams.set("client_library_name","ndt7-js"),t.searchParams.set("client_library_version",this.version()),this.config.metadata&&Object.entries(this.config.metadata).forEach((function(e){var n=e[0],r=e[1];t.searchParams.set(n,r)})),this.config.userAcceptedDataPolicy||t.searchParams.set("meta_key_required","true"),c.debug("url: ".concat(t)),t},e.prototype.makeWebsocket=function(e,t){return r(this,void 0,void 0,(function(){var n,r,i,s,u,l,f,p,d,h,g,v,m,y;return o(this,(function(o){switch(o.label){case 0:n=new WebSocket(e,t),r={results:[]},i={results:[]},o.label=1;case 1:return n.readyState,s=n.readyState,u=performance.now(),l=r.results.length>0?r.results.slice(-1)[0]:{},[4,this.getWebsocketInfo(n,s,u,l)];case 2:if(f=o.sent(),f&&r.results.push(f),p=f.TCPInfo,d=i.results.length>0?i.results.slice(-1)[0]:{},!p)return[3,4];if(p.State>10)return[3,6];h=u,g=p.BytesReceived,v=p.BytesSent,m=p.SegsOut,y=p.SegsIn,o.label=3;case 3:g===p.BytesReceived&&v===p.BytesSent&&m===p.SegsOut&&y===p.SegsIn&&u-h<3e3||(p.AppInfo={Timestamp:u},i.results.push(p),h=u,g=p.BytesReceived,v=p.BytesSent,m=p.SegsOut,y=p.SegsIn),o.label=4;case 4:return 0===n.readyState?[3,5]:1===n.readyState?[3,5]:[3,6];case 5:return[4,new Promise((function(e){return setTimeout(e,100)}))];case 6:return 3===n.readyState?[3,8]:[3,1];case 7:return[3,8];case 8:return n.tcpInfo=i,n.websocketInfo=r,c.debug("makeWebsocket return",n),[2,n]}}))}))},e.prototype.getWebsocketInfo=function(e,t,n,r){return r&&r.Timestamp===n?null:{Timestamp:n,State:t,Buffer:e.bufferedAmount}},e.prototype.parseSummary=function(e,t){if(!e||!e.results||e.results.length<=0)return c.warn("empty results",e),{};c.debug("".concat(t,".summary"),e);var n=e.results[0],r=e.results.slice(-1)[0],o={first:n,last:r,start_time:n.Timestamp,end_time:r.Timestamp,elapsed:(r.Timestamp-n.Timestamp)/1e3};if("tcpinfo"===t)o.bytes_received=r.BytesReceived-n.BytesReceived,o.bytes_sent=r.BytesSent-n.BytesSent;else{if("websocket"!==t)return o;o.bytes=r.Buffer-n.Buffer}return o},e}();t.Client=u,t.default=u}]).default}));
+    </script>
+
+    <script>
+      /*
+ * Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+ *
+ * Use of this source code is governed by a BSD-style license
+ * that can be found in the LICENSE file in the root of the source
+ * tree.
+ */
+/* eslint-env node */
+
+'use strict';var _typeof="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e};!function(e,t){"object"===("undefined"==typeof exports?"undefined":_typeof(exports))&&"undefined"!=typeof module?t(exports):"function"==typeof define&&define.amd?define(["exports"],t):t(e.adapter={})}(this,function(e){"use strict";var t=function(){if("undefined"==typeof window)return null;if(navigator.mozGetUserMedia)return"firefox";if(navigator.webkitGetUserMedia)return"chrome";if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)return"chrome";if(window.RTCPeerConnection&&"function"==typeof window.RTCPeerConnection.prototype.addTrack)return"chrome";if(navigator.userAgent.match(/Edge\/(\d+).(\d+)$/))return"edge";if(navigator.userAgent.match(/Safari\/(\d+).(\d+)/))return"safari";if(navigator.msGetUserMedia)return"edge";if(navigator.mediaDevices&&window.RTCPeerConnection)return"chrome";if(navigator.userAgent.match(/AppleWebKit\/(\d+)\./))return"safari"},n=t(),r=function(){var e="undefined"==typeof window?0:navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);return e?parseInt(e[2],10):0}(),i=function(){if("undefined"==typeof window)return 0;if("firefox"===n)return parseInt(navigator.userAgent.match(/Firefox\/([0-9]+)\./)[1],10);if("edge"===n)return parseInt(navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)[2],10);if("safari"===n)return parseInt(navigator.userAgent.match(/Version\/(\d+).(\d+)/)[1],10)},o=function(){if("undefined"==typeof window)return null;if("safari"!==n||!navigator.userAgent.match(/AppleWebKit\/([0-9]+)\./))return null;var e=navigator.userAgent.match(/AppleWebKit\/([0-9]+)\./);return parseInt(e[1],10)},a=null;a="undefined"!=typeof window&&window.HTMLMediaElement?window.HTMLMediaElement.prototype.play:null;var s="undefined"==typeof window?null:window.navigator,d={browser:n,version:i(),supportsUnifiedPlan:!1,supportsPlanB:!1,isChrome:"chrome"===n,isFirefox:"firefox"===n,isEdge:"edge"===n,isSafari:"safari"===n,chromeVersion:r,safariWebKitVersion:o()},c={log:function(){if("object"===("undefined"==typeof console?"undefined":_typeof(console))&&console.log){for(var e=arguments.length,t=Array(e),n=0;n<e;n++)t[n]=arguments[n];console.log.apply(console,t)}},warn:function(){if("object"===("undefined"==typeof console?"undefined":_typeof(console))&&console.warn){for(var e=arguments.length,t=Array(e),n=0;n<e;n++)t[n]=arguments[n];console.warn.apply(console,t)}},error:function(){if("object"===("undefined"==typeof console?"undefined":_typeof(console))&&console.error){for(var e=arguments.length,t=Array(e),n=0;n<e;n++)t[n]=arguments[n];console.error.apply(console,t)}}};function u(e){var t=e.split(".");return{browser:t[0],version:parseInt(t[1])}}var l={"chrome.60":"Not part of the spec.",create:!0,getName:"OverconstrainedError",message:"Constraints cannot be satisfied by available devices.",name:"OverconstrainedError"},f={"chrome.60":"Not part of the spec. Non-standard constraint property.",create:!1,level:!0,max:!0,min:!0},p={"chrome.60":"Not part of the spec. Non-standard constraint property.",create:!1,value:!0},m={};function g(e,t,n){var r,i,o;(r=e,i=t,o=n,d.isChrome&&d.chromeVersion>=60||d.isFirefox&&d.version>=52||d.isEdge||d.isSafari)&&("OverconstrainedError"===r.name||"NotSupportedError"===r.name||"MandatoryUsed"===r.name)&&(o=l,d.isChrome&&d.chromeVersion>=60?(o["chrome.60"]||(o["chrome.60"]="Similar to specific constraints that are not supported."),r=new(0,o.create?window[o.getName]:Error)(o.message)):r=new(0,o.create?window[o.getName]:Error)(o.message),r.name=o.name,r.constraint="Not part of the spec",d.isChrome?c.warn(o["chrome.60"]):d.isFirefox?c.warn(o["firefox.52"]):d.isEdge?c.warn(o.edge):d.isSafari&&c.warn(o.safari),i&&Object.keys(i).forEach(function(e){var t=i[e];"object"===("undefined"==typeof t?"undefined":_typeof(t))?Object.keys(t).forEach(function(e){var n=t[e];if(o[e])c.warn(o[e]["chrome.60"]),r.constraint=e;else if(m[e]){var i=m[e],a=i.browser;i.version;a===d.browser&&c.warn(e+" is not supported in "+d.browser+" "+d.version)}else o[n]?c.warn(o[n]):"min"===e||"max"===e||"exact"===e?c.warn(f["chrome.60"]):"value"===e?c.warn(p["chrome.60"]):c.warn(e+": "+JSON.stringify(n))})):("string"==typeof t&&(o[t]?c.warn(o[t]):c.warn(t+": "+t)),"boolean"==typeof t&&c.warn(t+": "+t))})))}(e,t);var h=function(e,t,n){var r,i=n?"video":"audio",o={};return o[i]={},t.forEach(function(e){var t;r=e.split("."),d.isChrome&&"goog"===r[0]?d.chromeVersion>=61?t=r[1]:d.chromeVersion>=58?o[i][r[1]]="NOT SUPPORTED. TODO: REMOVE":r[1]in l||(t=r[1]):t=e,o[i][t]={}}),c.log("extracted constraints:",o),o},v=function(e,t){return d.isChrome&&d.chromeVersion>=66||d.isFirefox&&d.version>=56||d.isSafari&&d.safariWebKitVersion>=605||d.isEdge&&d.version>=16?e.getCapabilities():{}};function b(e){var t=h(0,Object.keys(e.audio?e.audio:[]),"audio"),n=h(0,Object.keys(e.video?e.video:[]),"video");c.log("apply shim",t),c.log("apply shim",n)}function y(e,t){var n,r="function"==typeof e.getCapabilities?e.getCapabilities():{},i=r[t],o={};"object"===("undefined"==typeof i?"undefined":_typeof(i))?Object.keys(i).forEach(function(e){o[e]=i[e]}):o[t]=i;var a=h(0,Object.keys(o),"audio"===t);for(n in a[t])n in l||c.log("apply shim",a)}function C(e,t){var n;t.forEach(function(t){var r;n=t.split("="),e[n[0]]=n[1]})}function P(e){return"aspectRatio"===e?"googAspectRatio":"facingMode"===e?"googFacingMode":e}function k(e,t,n){return d.isChrome&&d.chromeVersion<66?e:d.isFirefox&&d.version<59?e:"autoGainControl"!==t&&"echoCancellation"!==t&&"noiseSuppression"!==t?e:("boolean"==typeof n&&n||c.warn(t+" is not scalar, but: "+n),e)}function w(e,t,n){var r,i,o,a;r=e,i=t,o=n,d.isChrome&&d.chromeVersion<61&&(r[i]=o),a=e,d.isFirefox&&d.version<56&&(a.advanced||(a.advanced=[]),a.advanced.push(function(e,t){return{e:t}}()))}function T(e,t){var n=e.split("."),r=n.length,i=t,o=[];if(0===r)throw new Error("Invalid parameter: "+e);if(1===r)i[P(e)]?o.push(i[P(e)]):(i[e]&&o.push(i[e]),i.mandatory&&i.mandatory[P(e)]&&o.push(i.mandatory[P(e)]),i.mandatory&&i.mandatory[e]&&o.push(i.mandatory[e]),i.optional&&i.optional[P(e)]&&o.push(i.optional[P(e)]),i.optional&&i.optional[e]&&o.push(i.optional[e]));else{var a=i[n[0]];a?o.push(T(n.splice(1,r-1).join("."),a)):o.push(void 0)}return o}function E(e){var t;return d.isChrome&&d.chromeVersion>=66||d.isFirefox&&d.version>=57||d.isEdge&&d.version>=15?e:d.isChrome&&d.chromeVersion>=61?(t=JSON.parse(e),c.log("::set",t),t.audio&&(t.audio=k(t.audio,"autoGainControl",T("autoGainControl",t.audio)[0]),t.audio=k(t.audio,"echoCancellation",T("echoCancellation",t.audio)[0]),t.audio=k(t.audio,"noiseSuppression",T("noiseSuppression",t.audio)[0])),JSON.stringify(t)):e}function S(e){return d.isChrome&&d.chromeVersion<61&&(e=function(e){var t=JSON.parse(e);return t.audio&&(w(t.audio,"autoGainControl",T("googAutoGainControl",t.audio)[0]),w(t.audio,"echoCancellation",T("googEchoCancellation",t.audio)[0]),w(t.audio,"noiseSuppression",T("googNoiseSuppression",t.audio)[0])),JSON.stringify(t)}(e)),e}function A(e){return d.isFirefox&&d.version>55?e:d.isFirefox?S(e):e}function R(e){var t,n,r,i;t=e,n="autoGainControl",r=T("googAutoGainControl",t)[0],i=T(n,t)[0],!0===r?t[n]=!0:!0===i&&(t[n]=!0),t=e,n="echoCancellation",r=T("googEchoCancellation",t)[0],i=T(n,t)[0],!0===r?t[n]=!0:!0===i&&(t[n]=!0),t=e,n="noiseSuppression",r=T("googNoiseSuppression",t)[0],i=T(n,t)[0],!0===r?t[n]=!0:!0===i&&(t[n]=!0),e}function D(e){if(d.isChrome&&d.chromeVersion>62);else if(d.isFirefox&&d.version>54);else if(d.isSafari){var t;for(t in e.video)t in l||c.log(t);b(e)}else d.isEdge||c.log(e)}function M(e,t,n,r,i){var o;d.isChrome&&d.chromeVersion<61?(c.log(t),c.log(n),"object"===("undefined"==typeof n?"undefined":_typeof(n))&&(n.mandatory||n.optional)&&(o=n,c.warn("mandatory/optional constraints are deprecated."),o=JSON.parse(JSON.stringify(o)),o.mandatory&&o.mandatory.googAutoGainControl&&w(o,"autoGainControl",o.mandatory.googAutoGainControl),o.mandatory&&o.mandatory.googEchoCancellation&&w(o,"echoCancellation",o.mandatory.googEchoCancellation),o.mandatory&&o.mandatory.googNoiseSuppression&&w(o,"noiseSuppression",o.mandatory.googNoiseSuppression),o.optional&&o.optional.googAutoGainControl&&w(o,"autoGainControl",o.optional.googAutoGainControl),o.optional&&o.optional.googEchoCancellation&&w(o,"echoCancellation",o.optional.googEchoCancellation),o.optional&&o.optional.googNoiseSuppression&&w(o,"noiseSuppression",o.optional.googNoiseSuppression),n=o)):d.isFirefox&&d.version<53?("object"===("undefined"==typeof n?"undefined":_typeof(n))&&(n.mandatory||n.optional)&&(o=n,c.warn("mandatory/optional constraints are deprecated."),o=JSON.parse(JSON.stringify(o)),o.mandatory&&o.mandatory.autoGainControl&&w(o,"autoGainControl",o.mandatory.autoGainControl),o.mandatory&&o.mandatory.echoCancellation&&w(o,"echoCancellation",o.mandatory.echoCancellation),o.mandatory&&o.mandatory.noiseSuppression&&w(o,"noiseSuppression",o.mandatory.noiseSuppression),o.optional&&o.optional.autoGainControl&&w(o,"autoGainControl",o.optional.autoGainControl),o.optional&&o.optional.echoCancellation&&w(o,"echoCancellation",o.optional.echoCancellation),o.optional&&o.optional.noiseSuppression&&w(o,"noiseSuppression",o.optional.noiseSuppression),n=o),e.apply(r,[n,i])):d.isEdge||e.apply(r,[n,i])}function U(e,t){D(t),"object"===_typeof(e.getConstraints)&&d.isFirefox&&d.version>=54||d.isEdge&&d.version>=15?g(e,t.audio,l):d.isChrome&&d.chromeVersion>=61?y(e,"audio"):d.isFirefox&&d.version>=52?y(e,"audio"):d.isSafari?b(t):d.isEdge||c.warn("Not implemented.")}function L(e,t){"object"===_typeof(e.getConstraints)&&d.isFirefox&&d.version>=54||d.isEdge&&d.version>=15?g(e,t.video,l):d.isChrome&&d.chromeVersion>=61?y(e,"video"):d.isFirefox&&d.version>=52?y(e,"video"):d.isSafari?b(t):d.isEdge||c.warn("Not implemented.")}function O(e,t){var n,r,i,o,a;a=t,(d.isChrome&&d.chromeVersion>=60||d.isFirefox&&d.version>=52||d.isEdge||d.isSafari)&&("object"===("undefined"==typeof a?"undefined":_typeof(a))&&a.video&&(d.isChrome&&d.chromeVersion>=60?(Object.keys(a.video).forEach(function(e){var t;e in l?c.warn(l[e]["chrome.60"]):e in m?c.warn(e+" is not supported in "+d.browser+" "+d.version):(t=e,d.isChrome&&d.chromeVersion>=61&&"aspectRatio"===t&&c.warn("Safari specific constraint: aspectRatio"))}),Object.keys(a.video).forEach(function(e){var t=a.video[e];"object"===("undefined"==typeof t?"undefined":_typeof(t))&&Object.keys(t).forEach(function(e){e in f?c.warn(f[e]["chrome.60"]):e in m?c.warn(e+" is not supported in "+d.browser+" "+d.version):e in p&&c.warn(p[e]["chrome.60"])})})):d.isFirefox&&d.version>=52?(Object.keys(a.video).forEach(function(e){e in l?c.warn(l[e]["firefox.52"]):e in m&&c.warn(e+" is not supported in "+d.browser+" "+d.version)}),Object.keys(a.video).forEach(function(e){var t=a.video[e];"object"===("undefined"==typeof t?"undefined":_typeof(t))&&Object.keys(t).forEach(function(e){e in f?c.warn(f[e]["firefox.52"]):e in m?c.warn(e+" is not supported in "+d.browser+" "+d.version):e in p&&c.warn(p[e]["firefox.52"])})})):d.isEdge?Object.keys(a.video).forEach(function(e){e in l?c.warn(l[e].edge):e in m&&c.warn(e+" is not supported in "+d.browser+" "+d.version)}):d.isSafari&&(Object.keys(a.video).forEach(function(e){e in l?c.warn(l[e].safari):e in m&&c.warn(e+" is not supported in "+d.browser+" "+d.version)}),Object.keys(a.video).forEach(function(e){var t=a.video[e];"object"===("undefined"==typeof t?"undefined":_typeof(t))&&Object.keys(t).forEach(function(e){e in f?c.warn(f[e].safari):e in m?c.warn(e+" is not supported in "+d.browser+" "+d.version):e in p&&c.warn(p[e].safari)})})))}(e,t),r=e,i=t,o=function(e,t){return M(r,e,t.video,r,[t,function(e){L(r,t)},function(e){g(e,t.video,l)}])},(d.isChrome&&d.chromeVersion>=61||d.isFirefox&&d.version>=56?n=e.apply(r,[t]):d.isEdge?n=e.apply(r,[t]):(n=new Promise(o),D(t)),d.isFirefox&&d.version>=54||d.isEdge&&d.version>=15?n.then(function(e){g(e,t.audio,l),g(e,t.video,l)}):d.isSafari||d.isEdge||!n||(n.catch(function(e){}),n.then(function(e){e.getTracks().forEach(function(n){"audio"===n.kind&&U(n,t),"video"===n.kind&&L(n,t)})}))),n),O(e,t)}function G(e,t){var n,r,i,o;return d.isFirefox&&d.version>52?(r=t,i=function(e){return"OverconstrainedError"===e.name||"NotSupportedError"===e.name||"MandatoryUsed"===e.name?"Constraints cannot be satisfied by available devices.":"SecurityError"===e.name?"The user has denied permission.":e.name},o=function(e,t){return new Error(i(e))},n=e.apply(r,[t]),n.catch(function(e){return Promise.reject(o(e,t.video))}),n):d.isSafari?O(e,t):d.isEdge?O(e,t):(n=e.apply(e,[t]),n.catch(function(e){return Promise.reject(e)}),n)}function x(e){var t;d.isChrome?(c.log("This is Chrome "+d.chromeVersion),window.AudioContext=window.AudioContext||window.webkitAudioContext,d.chromeVersion<58&&((t=e).prototype.getCapabilities=function(){return v(this,"audio")}),d.chromeVersion<66&&(t.prototype.applyConstraints=function(e){return M(this.applyConstraints,this,e,this,[e,function(){},function(e){}])}),d.chromeVersion<61&&(t.prototype.getConstraints=function(){return R(this.getConstraints())})):d.isFirefox?(c.log("This is Firefox "+d.version),window.AudioContext=window.AudioContext||window.webkitAudioContext,d.version<56&&(t=e).prototype.getCapabilities=function(){return v(this,"audio")},d.version<53&&(t.prototype.applyConstraints=function(e){return M(this.applyConstraints,this,e,this,[e,function(){},function(e){}])}),d.version<56&&(t.prototype.getConstraints=function(){return A(this.getConstraints())})):d.isSafari?(c.log("This is Safari "+d.version),window.AudioContext=window.AudioContext||window.webkitAudioContext,(t=e).prototype.getCapabilities=function(){return v(this,"audio")},t.prototype.applyConstraints=function(e){return M(this.applyConstraints,this,e,this,[e,function(){},function(e){}])},t.prototype.getConstraints=function(){return A(this.getConstraints())}):d.isEdge?c.log("This is Edge "+d.version):c.log("This is an unknown browser.")}function B(e){var t,n,r;d.isChrome?(n=e,r=function(e,t,n){return M(e,t,n,t,[n,function(){},function(e){}])},(t=n).prototype.getCapabilities=function(){return v(this,"video")},d.chromeVersion<66&&(t.prototype.applyConstraints=function(e){return r(this.applyConstraints,this,e)})):d.isFirefox?(n=e,r=function(e,t,n){return M(e,t,n,t,[n,function(){},function(e){}])},(t=n).prototype.getCapabilities=function(){return v(this,"video")},d.version<53&&(t.prototype.applyConstraints=function(e){return r(this.applyConstraints,this,e)}),d.version<56&&(t.prototype.getConstraints=function(){return A(this.getConstraints())})):d.isSafari?((t=e).prototype.getCapabilities=function(){return v(this,"video")},t.prototype.applyConstraints=function(e){return M(this.applyConstraints,this,e,this,[e,function(){},function(e){}])},t.prototype.getConstraints=function(){return S(this.getConstraints())}):d.isEdge||c.log("This is an unknown browser.")}function H(e,t){var n,r,i,o;(d.isChrome&&d.chromeVersion<72||d.isFirefox&&d.version<60)&&(n=e,r=t,i=s.mediaDevices.getUserMedia,o=function(e,t,n,r,i,o){var a,s;return d.isChrome&&d.chromeVersion<71?s=function(e){return new Error("PermissionDeniedError"===e.name?"Permission denied":"Permission dismissed")}:d.isFirefox&&d.version<58&&(s=function(e){return new Error("PermissionDeniedError"===e.name?"Permission denied":"Permission dismissed")}),a=G(t,n),a.catch(function(e){return o(s(e))}),a.then(function(e){r(e)})},n.mediaDevices.getUserMedia=function(e){return o(0,i,e,arguments[1],arguments[2],arguments[0])}),G(e.mediaDevices.getUserMedia,t).then(function(e){return e})}function j(e,t){if(d.isChrome&&d.chromeVersion>=72)return e.apply(t,[arguments[2]]);if(d.isFirefox&&d.version>=66)return e.apply(t,[arguments[2]]);if(d.isEdge&&d.version>=17)return e.apply(t,[arguments[2]]);if(d.isSafari&&d.version>=12)return e.apply(t,[arguments[2]]);throw new Error("getDisplayMedia is not supported")}function I(e){var t=e;if(!t)return c.error("PeerConnection object is not initialized."),"";"object"!==("undefined"==typeof t?"undefined":_typeof(t))&&c.error("PeerConnection object is not an object."),"object"===("undefined"==typeof t?"undefined":_typeof(t))&&(t.getConfiguration?c.log(t.getConfiguration()):c.error("Can't find getConfiguration object.")),t.getConfiguration()}function K(e){var t,n,r;d.isChrome&&d.chromeVersion>60||d.isFirefox&&d.version>52||d.isEdge||d.isSafari?t="https_://webrtc.org/testing/test-page-version":d.isEdge?(n=I(e),C(r={},n?Object.keys(n).forEach(function(e){var t,n,i,o,a;t=e,n=r,i=I(),o=i[e],a={},a.urls=o,n[t]=a,Object.keys(o).forEach(function(e){})}):"Not implemented"),t=Object.keys(r).join(" ")):(I(e),t="Not implemented"),c.log(t)}function N(e){return"object"===("undefined"==typeof e?"undefined":_typeof(e))||(e={iceServers:[]}),e}function V(e){return d.isEdge&&d.version<15?function(e){var t=JSON.parse(e);return t.iceServers.map(function(e){return e.url&&(e.urls=e.url),e}),JSON.stringify(t)}(JSON.stringify(e)):e}function F(e){return d.isFirefox&&d.version<53?function(e){var t=JSON.parse(e);return t.iceServers.map(function(e){return e.url&&(e.urls=e.url,delete e.url),e}),JSON.stringify(t)}(JSON.stringify(e)):e}function z(e,t){var n,r,i,o=window.RTCPeerConnection;d.isChrome&&d.chromeVersion<61&&(n=e,r=function(e,t,r,i,o){return new n(e,function(e){var n;n=t,d.isFirefox?c.warn("Use of obsolete RTCPeerConnection constructor"):d.isChrome&&c.warn("Use of obsolete RTCPeerConnection constructor."),K(n)})},e=r,window.RTCPeerConnection=e),i=e,d.isChrome&&d.chromeVersion<66&&(i.prototype.setConfiguration=function(e){return this.setConfiguration(e)}),d.isChrome&&d.chromeVersion<71&&(i.prototype.addTrack=function(e,t){var n=this.addTrack(e,t);return d.isChrome&&d.chromeVersion<71&&c.warn("Unsupported: addTrack return value is not implemented."),n}),d.isFirefox&&(d.version<53&&(i.prototype.setConfiguration=function(e){return this.setConfiguration(F(e))}),d.version<58&&(i.prototype.addTrack=function(e,t){var n=this.addTrack(e,t);return d.isFirefox&&d.version<58&&c.warn("Unsupported: addTrack return value is not implemented."),n})),d.isEdge&&(d.version<15&&(i.prototype.setConfiguration=function(e){return this.setConfiguration(V(e))}),d.version<16&&(i.prototype.addTrack=function(e,t){var n=this.addTrack(e,t);return d.isEdge&&d.version<16&&c.warn("Unsupported: addTrack return value is not implemented."),n})),e.prototype.setConfiguration=function(e){return this.setConfiguration(e)},e=new e(N(t))}function q(e,t){d.isChrome&&d.chromeVersion>=71&&(d.supportsUnifiedPlan=!0),d.isFirefox&&d.version>=54&&(d.supportsUnifiedPlan=!0),d.isSafari&&d.safariWebKitVersion>=605&&(d.supportsUnifiedPlan=!0,d.supportsPlanB=!0),d.isEdge&&d.version>=16&&(d.supportsUnifiedPlan=!0)}var W=Object.freeze({adapterInfo:d,extractOrigin:function(e){return d.isChrome?e.replace(/^(turn|stun|https):/,"").split("?")[0]:e},formatType:function(e){if(e){var t=e.split(" ");if(2!==t.length)return e;var n=t[0].toLowerCase(),r=t[1];return n+":"+r}return""},getLogLevel:function(e){var t=e.split(":");return"INFO"===t[1]?3:11},log:c.log,setLogLevel:function(e){var t=e.split(":");if(!(t.length>1))return"Not set: "+e;var n=parseInt(t[0],10);c.log(n)},maskUP:function(e){var t;return(t=e).split("\n").map(function(e){return 0===e.indexOf("a=group:BUNDLE")?e.split(" ").splice(0,2).join(" "):e}).join("\n")},matchType:function(e,t){var n=t.split(":");return 2===n.length&&!(e.search(n[1])===-1)&&n[0]===e.substring(0,e.indexOf(":"))},mergeConstraints:function(e,t){var n,r={},i=Object.keys(e),o=Object.keys(t);for(n in i)r[i[n]]=e[i[n]];for(n in o)r[o[n]]=t[o[n]];return r},updateDiff:function(e,t){var n,r=!1,i=Object.keys(e);return Object.keys(t).forEach(function(e){i.indexOf(e)===-1&&(r=!0)}),Object.keys(t).forEach(function(n){e[n]!==t[n]&&(r=!0)}),r?(c.log("config diff:",e,t),e=t):c.log("config diff:",e,t),e}}),J=function(e,t){var n,r=s.mediaDevices.enumerateDevices(e,t);return d.isFirefox&&d.version<58?(n=r,n.then(function(e){return e.map(function(e){return"audioinput"===e.kind&&(e.kind="audioInput"),"audiooutput"===e.kind&&(e.kind="audioOutput"),"videoinput"===e.kind&&(e.kind="videoInput"),e})}).then(function(e){return e.filter(function(e){return 0!==e.kind.length})}),n):r};function Y(e,t){var n=window.RTCPeerConnection;e.RTCPeerConnection=function(e,r){var i,o;return o=t,d.isFirefox&&d.version<62&&o&&o.iceTransportPolicy?o.iceTransportPolicy="all":o=o,c.log("RTCPeerConnection",e,r,o),i=new n(e,o),K(i),i}}function Q(e,t){if(!t)return e;if(!t.iceServers)return e;var n=[];return t.iceServers.forEach(function(e){var t=e.urls;if(e.url)if(d.isChrome&&d.chromeVersion<58)t=e.url;else if("string"==typeof e.url)t=[e.url];else if("object"===_typeof(e.url))t=e.url;else{if("object"!==("undefined"==typeof t?"undefined":_typeof(t)))return;t=e.urls}else t=e.urls;if(t){var r="string"==typeof t?t:t[0];if(r.indexOf("stun:")!== -1||r.indexOf("turn:")!== -1)if(d.isChrome&&d.chromeVersion<58);else{var i=e;n.push(i)}}}),e.iceServers=n,e}function X(e,t){var n;d.isChrome&&d.chromeVersion<59?n=t:d.isFirefox&&d.version<53?n=t:d.isEdge?n=t:d.isSafari&&t&&t.sdp?n=t.sdp:n=t,d.isChrome&&d.chromeVersion<57&&(n=new RTCSessionDescription({type:t.type,sdp:t.sdp})),K(e),e.setLocalDescription(n).then(function(){c.log("setLocalDescription",n)}).catch(function(e){c.error("setLocalDescription",e)})}function Z(e,t){var n,r;d.isChrome&&d.chromeVersion<58?n=t:d.isFirefox?d.version<53?n=t:t&&t.candidate?(n=t.candidate,r=t.sdpMid,e.addIceCandidate(n,r).then(function(){c.log("addIceCandidate",n,r)}).catch(function(e){c.error("addIceCandidate",e)})):n=t:d.isEdge?n=t:d.isSafari?(n=t,e.addIceCandidate(n).then(function(){c.log("addIceCandidate",n)}).catch(function(e){c.error("addIceCandidate",e)})):n=t,c.log("addIceCandidate",n),e.addIceCandidate(n).then(function(){c.log("addIceCandidate",n)}).catch(function(e){c.error("addIceCandidate",e)})}function $(e,t){var n,r,i,o,a;d.isFirefox&&d.version<53?(r=t,i=function(e){return"object"===("undefined"==typeof e?"undefined":_typeof(e))&&e.sdp&&(e.sdp=A(e.sdp)),e},o=function(e){return new Error(e.name)},a=e.apply(r,[t]),a.catch(function(e){return Promise.reject(o(e))}),n=a.then(i)):n=e.apply(e,[t]),n=e.apply(e,[t]);var s=function(t){return"object"===("undefined"==typeof t?"undefined":_typeof(t))&&t.sdp&&(t.sdp=A(t.sdp)),t};return d.isFirefox&&d.version<53&&(n=n.then(s)),n}function ee(e,t){var n,r,i,o,a,s;d.isFirefox&&d.version<53?(r=t,i=function(e){return"object"===("undefined"==typeof e?"undefined":_typeof(e))&&e.sdp&&(e.sdp=A(e.sdp)),e},o=function(e){return new Error(e.name)},a=e.apply(r,[t]),a.catch(function(e){return Promise.reject(o(e))}),n=a.then(i)):(n=e.apply(e,[t]),d.isFirefox&&d.version<53);var c=function(t){return"object"===("undefined"==typeof t?"undefined":_typeof(t))&&t.sdp&&(t.sdp=A(t.sdp)),t};return d.isFirefox&&d.version<53&&(s=n,n=s.then(c)),n}function te(e){var t;d.isChrome&&d.chromeVersion<58?t=!0:d.isFirefox&&d.version<54&&(t=!0);var n,r,i,o,a,s;d.isChrome&&d.chromeVersion<58?t=!0:d.isFirefox&&d.version<54&&(t=!0);var l,f,p,g,h;if(d.isChrome&&d.chromeVersion>60||d.isFirefox&&d.version>52||d.isEdge||d.isSafari?c.log("Use RTCPeerConnection constructor."):d.isEdge?(Y(e,t),l=e,f=window.RTCPeerConnection,l.RTCPeerConnection=function(e){var t;return(t=JSON.parse(JSON.stringify(e))).iceServers.map(function(e){return e.url&&(e.urls=e.url),e}),new f(t)}):d.isChrome&&d.chromeVersion<61?(Y(e,t),p=e,g=window.RTCPeerConnection,p.RTCPeerConnection=function(e,t){var n;return n=Q(e,t),new g(n,t)}):d.isFirefox&&(d.version<53?Y(e,t):(Y(e,t),d.version<53&&(h=e,h.RTCPeerConnection.prototype.setConfiguration=function(e){var t,n;n=F(e),c.log("setConfiguration",e,n),(t=this.setConfiguration(n)).catch(function(e){c.error(e)}),t}))),e.RTCPeerConnection.prototype.createOffer=function(e,t,n){return $(this.createOffer,this,e,t)},e.RTCPeerConnection.prototype.createAnswer=function(e,t,n){return ee(this.createAnswer,this,e,t)},e.RTCPeerConnection.prototype.setLocalDescription=function(e,t,n,r){return X(this,e,t,n)},d.isChrome&&d.chromeVersion<58||d.isFirefox&&d.version<53||d.isEdge||d.isSafari?e.RTCPeerConnection.prototype.addIceCandidate=function(e,t,n){return Z(this,e,t,n)}:(e.RTCPeerConnection.prototype.addIceCandidate=function(e){return Z(this,e)},e.RTCPeerConnection.prototype.addIceCandidate=function(e,t){return Z(this,e,t)}),d.isChrome&&d.chromeVersion<61||d.isFirefox&&d.version<53||d.isEdge||d.isSafari||(n=window.RTCPeerConnection,r=function(e,t){return new n(e,t)},window.RTCPeerConnection=r,r.prototype.setConfiguration=function(e){c.log(e),this.setConfiguration(e)},r.prototype.createOffer=function(e){return $(this.createOffer,this,e)},r.prototype.createAnswer=function(e){return ee(this.createAnswer,this,e)},r.prototype.setLocalDescription=function(e){return X(this,e)}),d.isChrome&&d.chromeVersion<66||d.isFirefox&&d.version<58||d.isEdge||d.isSafari||(i=window.RTCPeerConnection,o=function(e,t){var n=new i(e,t);return d.isChrome&&d.chromeVersion<66&&c.warn("Unsupported: addTrack return value is not implemented."),n},window.RTCPeerConnection=o,o.prototype.addTrack=function(e,t){return this.addTrack(e,t)},o.prototype.removeTrack=function(e){return this.removeTrack(e)}),d.isChrome&&d.chromeVersion<66||d.isFirefox||d.isEdge||d.isSafari||(a=window.RTCPeerConnection,s=function(e,t){var n=new a(e,t);return d.isChrome&&d.chromeVersion<66&&c.warn("Unsupported: RTCRtpSender.prototype.setParameters is not implemented."),n},window.RTCPeerConnection=s,s.prototype.getSenders=function(){return this.getSenders()}),d.isChrome&&d.chromeVersion>71&&d.isSafari&&d.safariWebKitVersion>604&&"object"===_typeof(e.RTCRtpSender)){var g=e.RTCRtpSender;g.prototype.getCapabilities=function(e){var t=g.getCapabilities(e);return d.isSafari&&d.safariWebKitVersion<605&&(t.codecs=t.codecs.filter(function(e){return"H264"===e.mimeType||"OPUS"===e.mimeType})),t}}if(q(e,t),s.mediaDevices||(s.mediaDevices={}),d.isChrome&&d.chromeVersion<60||d.isEdge&&d.version<15||d.isFirefox&&d.version<52||d.isSafari)s.mediaDevices.enumerateDevices=function(e,t){return J(e,t)};else if(s.mediaDevices&&s.mediaDevices.enumerateDevices);else{var v=e;v.navigator.mediaDevices={};var b=v.navigator.mediaDevices;b.enumerateDevices=function(e){return J(e,t)}}if(d.isChrome&&d.chromeVersion<61||d.isFirefox&&d.version<57||d.isEdge&&d.version<15)s.mediaDevices.getUserMedia=function(e,t,n){return H(s,e,t,n)};else if(s.mediaDevices&&s.mediaDevices.getUserMedia);else{var y=e,C=s;y.navigator.mediaDevices?y.navigator.mediaDevices.getUserMedia=function(e,t,n){return H(C,e,t,n)}:(y.navigator.mediaDevices={},y.navigator.mediaDevices.getUserMedia=function(e,t,n){return H(C,e,t,n)})}if(s.mediaDevices&&s.mediaDevices.getDisplayMedia?s.mediaDevices.getDisplayMedia=function(e){return j(s.mediaDevices.getDisplayMedia,s.mediaDevices,e)}:s.mediaDevices||(s.mediaDevices={}),s.mediaDevices.getDisplayMedia=function(e){return j(s.getDisplayMedia,s,e)},d.isChrome||d.isFirefox||d.isEdge)window.MediaStreamTrack&&x(window.MediaStreamTrack);else if(d.isSafari);else{var P="Not implemented.";c.warn(P)}if(d.isChrome||d.isFirefox||d.isEdge)window.MediaStreamTrack&&B(window.MediaStreamTrack);else if(d.isSafari);else{var P="Not implemented.";c.warn(P)}if(d.isChrome||d.isFirefox||d.isEdge);else if(d.isSafari){var k=e;k.RTCRtpSender?k.RTCRtpSender.prototype.getStats=function(){return this.getStats()}:c.warn("Not implemented.")}else c.warn("Not implemented.");if(d.isChrome||d.isFirefox||d.isEdge);else if(d.isSafari){var w=e;w.RTCRtpReceiver?w.RTCRtpReceiver.prototype.getStats=function(){return this.getStats()}:c.warn("Not implemented.")}else c.warn("Not implemented.");if(d.isChrome||d.isFirefox||d.isEdge);else if(d.isSafari){var T=e;T.RTCRtpContributingSource?T.RTCRtpContributingSource.prototype.getStats=function(){return c.warn("Not implemented.")}:c.warn("Not implemented.")}else c.warn("Not implemented.");d.isChrome&&d.chromeVersion<61?window.MediaStreamTrack.prototype.stop=function(){this.stop()}:d.isFirefox&&d.version<53&&window.MediaStreamTrack.prototype.stop=function(){this.stop()},d.isChrome&&d.chromeVersion<58?a=function(){this.play()}():d.isSafari&&d.safariWebKitVersion<604?a=function(){this.play()}:d.isEdge?a=function(){this.play()}:d.isFirefox&&d.version<54?a=function(){this.play()}():a=function(){return this.play()},window.HTMLMediaElement.prototype.play=function(){return a.apply(this,arguments)}}e.adapterFactory=te,e.adapterInfo=d,e.disableLog=function(e){return c.log=function(){},c.warn=function(){},c.error=function(){},W},e.disableWarnings=function(e){return c.warn=function(){},W},e.extractOrigin=function(e){return W.extractOrigin(e)},e.formatType=function(e){return W.formatType(e)},e.getLogLevel=function(e){return W.getLogLevel(e)},e.log=c.log,e.setLogLevel=function(e){return W.setLogLevel(e)},e.extractCandidates=function(e,t,n){return W.extractCandidates(e,t,n)},e.mergeConstraints=function(e,t){return W.mergeConstraints(e,t)},e.dump=function(e,t){return W.dump(e,t)},e.removeUP=function(e){return W.removeUP(e)},e.setUp=function(e){return W.setUp(e)},Object.defineProperty(e,"__esModule",{value:!0})});
+    </script>
+
+    <script>
+      (function (global, factory) {
+        typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+        typeof define === 'function' && define.amd ? define(factory) :
+        (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Janus = factory());
+      })(this, (function () { 'use strict';
+      
+        var console = window.console || {
+          log: function() {},
+          warn: function() {},
+          error: function() {}
+        };
+        var Promise = window.Promise || function() {
+          throw new Error('Janus needs Promise support');
+        };
+        var self = window;
+      
+        function Janus(options) {
+          options = options || {};
+          this.options = options;
+      
+          this.debug = 'all';
+          if('debug' in options) {
+            this.debug = options.debug;
+          }
+      
+          if(!Janus.isWebrtcSupported()) {
+            this.error('WebRTC not supported by this browser');
+            if(options.callback) {
+              options.callback('error', 'WebRTC not supported by this browser');
+            }
+            return;
+          }
+      
+          this.VERSION = "1.1.5";
+          this.master = options.master || null;
+          this.gateway = null;
+          this.sessionId = null;
+          this.pluginHandles = {};
+          this.server = options.server || null;
+          if(this.server && this.server.lastIndexOf('/') !== this.server.length - 1) {
+            this.server += '/';
+          }
+          this.iceServers = options.iceServers || null;
+          this.ipv6 = options.ipv6 || false;
+          this.withCredentials = options.withCredentials || false;
+          this.token = options.token || null;
+          this.apisecret = options.apisecret || null;
+          this.bundle = 'bundle' in options ? options.bundle : true;
+          this.rtcpMux = 'rtcpMux' in options ? options.rtcpMux : true;
+      
+          this.transactions = {};
+          this.transactionIdLength = 12;
+      
+          this.connected = false;
+          this.reconnect = 'reconnect' in options ? options.reconnect : false;
+          this.reconnectAttempts = options.reconnectAttempts || 10;
+          this.reconnectTimeout = options.reconnectTimeout || 2000;
+          this.reconnectAttempt = 0;
+      
+          this.keepAlivePeriod = options.keepAlive || 30000;
+          this.keepAliveHandle = null;
+      
+          this.webrtcStuff = {
+            started: false,
+            config: {
+              iceServers: this.iceServers,
+              bundlePolicy: this.bundle ? 'max-bundle' : 'balanced',
+              rtcpMuxPolicy: this.rtcpMux ? 'require' : 'negotiate'
+            },
+            pc: null,
+            dataChannel: null,
+            stream: null,
+            mySdp: null,
+            iceCompleted: false
+          };
+      
+          if(options.callback) {
+            options.callback('initialized');
+          }
+          this.info('Janus instance initialized');
+      
+          if(this.server) {
+            this.connect(options.callback);
+          }
+        }
+      
+        Janus.prototype.info = function() {
+          if(this.debug === 'all') {
+            console.log.apply(console, arguments);
+          }
+        };
+      
+        Janus.prototype.warn = function() {
+          if(this.debug === 'all' || this.debug === 'warn') {
+            console.warn.apply(console, arguments);
+          }
+        };
+      
+        Janus.prototype.error = function() {
+          if(this.debug === 'all' || this.debug === 'warn' || this.debug === 'error') {
+            console.error.apply(console, arguments);
+          }
+        };
+      
+        Janus.prototype.connect = function(callback) {
+          var that = this;
+          if(this.server === null) {
+            this.error('Invalid server URL');
+            if(callback) {
+              callback('error', 'Invalid server URL');
+            }
+            return;
+          }
+          if(this.master) {
+            this.gateway = this.master.gateway;
+            this.sessionId = this.master.sessionId;
+            this.connected = this.master.connected;
+            this.gateway.reference();
+            if(this.connected) {
+              this.info('Shared connection, session ' + this.sessionId);
+              if(callback) {
+                callback('success');
+              }
+              return;
+            }
+            this.warn('Master connection not established yet');
+          }
+      
+          this.info('Connecting to ' + this.server);
+          var transaction = this.transactions[this.randomString(this.transactionIdLength)] = {
+            callback: function(json) {
+              that.info('Got response to create:', json);
+              if(json.janus === 'success') {
+                that.sessionId = json.data.id;
+                that.info('Created session ' + that.sessionId);
+                that.connected = true;
+                that.reconnectAttempt = 0;
+                that.keepAlive();
+                if(callback) {
+                  callback('success');
+                }
+              } else {
+                that.error('Error creating session:', json.error.code, json.error.reason);
+                if(callback) {
+                  callback('error', 'Error creating session: ' + json.error.code + ' ' + json.error.reason);
+                }
+              }
+            },
+            error: function(cause) {
+              that.error('Error creating session:', cause);
+              if(callback) {
+                callback('error', 'Error creating session: ' + cause);
+              }
+            }
+          };
+      
+          var request = {
+            janus: 'create',
+            transaction: transaction.callback.transaction
+          };
+          if(this.token) {
+            request.token = this.token;
+          }
+          if(this.apisecret) {
+            request.apisecret = this.apisecret;
+          }
+      
+          var transport = {
+            connected: function() {
+              that.info('Sending create request:', request);
+              transport.send(request, transaction);
+            },
+            error: function(cause) {
+              that.error('Error connecting to ' + that.server, cause);
+              if(callback) {
+                callback('error', 'Error connecting to ' + that.server + ': ' + cause);
+              }
+            },
+            destroyed: function() {
+              that.warn('Connection to ' + that.server + ' destroyed');
+              that.gateway = null;
+              that.connected = false;
+              if(that.reconnect && that.reconnectAttempt < that.reconnectAttempts) {
+                that.reconnectAttempt++;
+                setTimeout(function() {
+                  that.connect(callback);
+                }, that.reconnectTimeout);
+              }
+            }
+          };
+      
+          if(this.server.startsWith('ws')) {
+            this.gateway = new Janus.WebSocket(this.server, 'janus-protocol', transport, this.withCredentials);
+          } else {
+            this.gateway = new Janus.Rest(this.server, transport, this.withCredentials);
+          }
+        };
+      
+        Janus.prototype.reconnect = function(callback) {
+          this.warn('Reconnecting to ' + this.server);
+          if(this.master) {
+            this.error('Cannot reconnect a slave instance');
+            if(callback) {
+              callback('error', 'Cannot reconnect a slave instance');
+            }
+            return;
+          }
+          if(this.gateway) {
+            this.gateway.destroy();
+          }
+          this.gateway = null;
+          this.connected = false;
+          this.sessionId = null;
+          this.pluginHandles = {};
+          this.transactions = {};
+          this.keepAliveHandle = null;
+          this.reconnectAttempt = 0;
+      
+          this.connect(callback);
+        };
+      
+        Janus.prototype.destroy = function(callback) {
+          this.info('Destroying Janus instance');
+          if(this.master) {
+            this.error('Cannot destroy a slave instance');
+            if(callback) {
+              callback('error', 'Cannot destroy a slave instance');
+            }
+            return;
+          }
+          if(!this.connected) {
+            this.info('Not connected');
+            if(callback) {
+              callback('success');
+            }
+            return;
+          }
+      
+          if(this.keepAliveHandle) {
+            clearInterval(this.keepAliveHandle);
+            this.keepAliveHandle = null;
+          }
+      
+          var transaction = this.transactions[this.randomString(this.transactionIdLength)] = {
+            callback: function(json) {
+              this.info('Got response to destroy:', json);
+              if(json.janus === 'success') {
+                this.info('Session ' + this.sessionId + ' destroyed');
+                if(this.gateway) {
+                  this.gateway.destroy();
+                }
+                this.gateway = null;
+                this.connected = false;
+                this.sessionId = null;
+                this.pluginHandles = {};
+                this.transactions = {};
+                if(callback) {
+                  callback('success');
+                }
+              } else {
+                this.error('Error destroying session:', json.error.code, json.error.reason);
+                if(callback) {
+                  callback('error', 'Error destroying session: ' + json.error.code + ' ' + json.error.reason);
+                }
+              }
+            }.bind(this),
+            error: function(cause) {
+              this.error('Error destroying session:', cause);
+              if(callback) {
+                callback('error', 'Error destroying session: ' + cause);
+              }
+            }.bind(this)
+          };
+      
+          var request = {
+            janus: 'destroy',
+            session_id: this.sessionId,
+            transaction: transaction.callback.transaction
+          };
+          if(this.token) {
+            request.token = this.token;
+          }
+          if(this.apisecret) {
+            request.apisecret = this.apisecret;
+          }
+      
+          if(this.gateway) {
+            this.info('Sending destroy request:', request);
+            this.gateway.send(request, transaction);
+          } else {
+            this.warn('No connection to send destroy request');
+            transaction.error('No connection');
+          }
+        };
+      
+        Janus.prototype.keepAlive = function() {
+          if(this.server === null || !this.connected) {
+            return;
+          }
+          if(this.keepAliveHandle) {
+            clearInterval(this.keepAliveHandle);
+          }
+          this.keepAliveHandle = setInterval(function() {
+            var transaction = this.transactions[this.randomString(this.transactionIdLength)] = {
+              callback: function(json) {
+                this.info('Got response to keepalive:', json);
+                if(json.janus === 'success') {
+                  this.info('Session ' + this.sessionId + ' still alive');
+                } else {
+                  this.error('Error keeping session alive:', json.error.code, json.error.reason);
+                }
+              }.bind(this),
+              error: function(cause) {
+                this.error('Error keeping session alive:', cause);
+              }.bind(this)
+            };
+            var request = {
+              janus: 'keepalive',
+              session_id: this.sessionId,
+              transaction: transaction.callback.transaction
+            };
+            if(this.token) {
+              request.token = this.token;
+            }
+            if(this.apisecret) {
+              request.apisecret = this.apisecret;
+            }
+            if(this.gateway) {
+              this.info('Sending keepalive request:', request);
+              this.gateway.send(request, transaction);
+            } else {
+              this.warn('No connection to send keepalive request');
+            }
+          }.bind(this), this.keepAlivePeriod);
+        };
+      
+        Janus.prototype.attach = function(options) {
+          options = options || {};
+          var that = this;
+          if(!this.connected) {
+            this.warn('No session to attach to');
+            if(options.error) {
+              options.error('No session to attach to');
+            }
+            return;
+          }
+          if(!options.plugin) {
+            this.error('Invalid plugin');
+            if(options.error) {
+              options.error('Invalid plugin');
+            }
+            return;
+          }
+      
+          var transaction = this.transactions[this.randomString(this.transactionIdLength)] = {
+            callback: function(json) {
+              this.info('Got response to attach:', json);
+              if(json.janus === 'success') {
+                var handleId = json.data.id;
+                this.info('Created handle ' + handleId);
+                var handle = new Janus.PluginHandle(this, options.plugin, handleId);
+                handle.onlocalstream = options.onlocalstream;
+                handle.onremotestream = options.onremotestream;
+                handle.onmessage = options.onmessage;
+                handle.ondataopen = options.ondataopen;
+                handle.ondata = options.ondata;
+                handle.oncleanup = options.oncleanup;
+                handle.ondetached = options.ondetached;
+                this.pluginHandles[handleId] = handle;
+                if(options.success) {
+                  options.success(handle);
+                }
+              } else {
+                this.error('Error attaching plugin:', json.error.code, json.error.reason);
+                if(options.error) {
+                  options.error('Error attaching plugin: ' + json.error.code + ' ' + json.error.reason);
+                }
+              }
+            }.bind(this),
+            error: function(cause) {
+              this.error('Error attaching plugin:', cause);
+              if(options.error) {
+                options.error('Error attaching plugin: ' + cause);
+              }
+            }.bind(this)
+          };
+      
+          var request = {
+            janus: 'attach',
+            session_id: this.sessionId,
+            plugin: options.plugin,
+            transaction: transaction.callback.transaction
+          };
+          if(this.token) {
+            request.token = this.token;
+          }
+          if(this.apisecret) {
+            request.apisecret = this.apisecret;
+          }
+      
+          if(this.gateway) {
+            this.info('Sending attach request:', request);
+            this.gateway.send(request, transaction);
+          } else {
+            this.warn('No connection to send attach request');
+            transaction.error('No connection');
+          }
+        };
+      
+        Janus.prototype.randomString = function(len) {
+          var charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+          var randomString = '';
+          for (var i = 0; i < len; i++) {
+            var randomPoz = Math.floor(Math.random() * charSet.length);
+            randomString += charSet.substring(randomPoz,randomPoz+1);
+          }
+          return randomString;
+        };
+      
+        Janus.isWebrtcSupported = function() {
+          return window.RTCPeerConnection && window.navigator.mediaDevices && window.navigator.mediaDevices.getUserMedia;
+        };
+      
+        Janus.WebSocket = function(server, protocol, transport, withCredentials) {
+          this.server = server;
+          this.protocol = protocol;
+          this.transport = transport;
+          this.withCredentials = withCredentials;
+          this.ws = null;
+          this.transactions = {};
+      
+          this.connect();
+        };
+      
+        Janus.WebSocket.prototype.connect = function() {
+          var that = this;
+          if(this.ws) {
+            this.ws.close();
+          }
+          this.info('Connecting to ' + this.server);
+          if(this.withCredentials) {
+            this.ws = new WebSocket(this.server, this.protocol, { withCredentials: true });
+          } else {
+            this.ws = new WebSocket(this.server, this.protocol);
+          }
+      
+          this.ws.onopen = function() {
+            that.info('Connected to ' + that.server);
+            if(that.transport && that.transport.connected) {
+              that.transport.connected();
+            }
+          };
+      
+          this.ws.onmessage = function(event) {
+            var json = JSON.parse(event.data);
+            that.info('Got message:', json);
+            if(json.transaction && that.transactions[json.transaction]) {
+              var transaction = that.transactions[json.transaction];
+              if(transaction.callback) {
+                transaction.callback(json);
+              }
+              delete that.transactions[json.transaction];
+            } else {
+              if(that.transport && that.transport.message) {
+                that.transport.message(json);
+              }
+            }
+          };
+      
+          this.ws.onclose = function() {
+            that.warn('Connection to ' + that.server + ' closed');
+            if(that.transport && that.transport.destroyed) {
+              that.transport.destroyed();
+            }
+          };
+      
+          this.ws.onerror = function(event) {
+            that.error('Error on connection to ' + that.server, event);
+            if(that.transport && that.transport.error) {
+              that.transport.error(event);
+            }
+          };
+        };
+      
+        Janus.WebSocket.prototype.send = function(request, transaction) {
+          this.info('Sending message:', request);
+          if(transaction) {
+            this.transactions[transaction.callback.transaction] = transaction;
+          }
+          this.ws.send(JSON.stringify(request));
+        };
+      
+        Janus.WebSocket.prototype.destroy = function() {
+          this.info('Destroying WebSocket connection');
+          if(this.ws) {
+            this.ws.close();
+          }
+          this.ws = null;
+          this.transactions = {};
+        };
+      
+        Janus.Rest = function(server, transport, withCredentials) {
+          this.server = server;
+          this.transport = transport;
+          this.withCredentials = withCredentials;
+          this.transactions = {};
+      
+          if(this.transport && this.transport.connected) {
+            this.transport.connected();
+          }
+        };
+      
+        Janus.Rest.prototype.send = function(request, transaction) {
+          this.info('Sending message:', request);
+          if(transaction) {
+            this.transactions[transaction.callback.transaction] = transaction;
+          }
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', this.server, true);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          if(this.withCredentials) {
+            xhr.withCredentials = true;
+          }
+          xhr.onload = function() {
+            if(xhr.status === 200) {
+              var json = JSON.parse(xhr.responseText);
+              this.info('Got message:', json);
+              if(json.transaction && this.transactions[json.transaction]) {
+                var transaction = this.transactions[json.transaction];
+                if(transaction.callback) {
+                  transaction.callback(json);
+                }
+                delete this.transactions[json.transaction];
+              } else {
+                if(this.transport && this.transport.message) {
+                  this.transport.message(json);
+                }
+              }
+            } else {
+              this.error('Error on connection to ' + this.server + ':', xhr.status, xhr.statusText);
+              if(transaction && transaction.error) {
+                transaction.error(xhr.statusText);
+              }
+              delete this.transactions[transaction.callback.transaction];
+            }
+          }.bind(this);
+          xhr.onerror = function(event) {
+            this.error('Error on connection to ' + this.server, event);
+            if(transaction && transaction.error) {
+              transaction.error(event);
+            }
+            delete this.transactions[transaction.callback.transaction];
+          }.bind(this);
+          xhr.send(JSON.stringify(request));
+        };
+      
+        Janus.Rest.prototype.destroy = function() {
+          this.info('Destroying REST connection');
+          this.transactions = {};
+        };
+      
+        Janus.PluginHandle = function(gateway, plugin, id) {
+          this.gateway = gateway;
+          this.plugin = plugin;
+          this.id = id;
+          this.webrtcStuff = {
+            started: false,
+            config: this.gateway.webrtcStuff.config,
+            pc: null,
+            dataChannel: null,
+            stream: null,
+            mySdp: null,
+            iceCompleted: false
+          };
+        };
+      
+        Janus.PluginHandle.prototype.send = function(options) {
+          options = options || {};
+          var that = this;
+          if(!this.gateway.connected) {
+            this.warn('No connection to send message');
+            if(options.error) {
+              options.error('No connection');
+            }
+            return;
+          }
+          if(!options.message) {
+            this.error('Invalid message');
+            if(options.error) {
+              options.error('Invalid message');
+            }
+            return;
+          }
+      
+          var transaction = this.gateway.transactions[this.gateway.randomString(this.gateway.transactionIdLength)] = {
+            callback: function(json) {
+              this.info('Got response to plugin message:', json);
+              if(json.janus === 'success') {
+                if(options.success) {
+                  options.success(json);
+                }
+              } else if(json.janus === 'ack') {
+                this.info('Got ack');
+                if(options.ack) {
+                  options.ack();
+                }
+              } else {
+                this.error('Error sending message:', json.error.code, json.error.reason);
+                if(options.error) {
+                  options.error('Error sending message: ' + json.error.code + ' ' + json.error.reason);
+                }
+              }
+            }.bind(this),
+            error: function(cause) {
+              this.error('Error sending message:', cause);
+              if(options.error) {
+                options.error('Error sending message: ' + cause);
+              }
+            }.bind(this)
+          };
+      
+          var request = {
+            janus: 'message',
+            session_id: this.gateway.sessionId,
+            handle_id: this.id,
+            body: options.message,
+            transaction: transaction.callback.transaction
+          };
+          if(this.gateway.token) {
+            request.token = this.gateway.token;
+          }
+          if(this.gateway.apisecret) {
+            request.apisecret = this.gateway.apisecret;
+          }
+          if(options.jsep) {
+            request.jsep = options.jsep;
+          }
+      
+          if(this.gateway.gateway) {
+            this.info('Sending plugin message:', request);
+            this.gateway.gateway.send(request, transaction);
+          } else {
+            this.warn('No connection to send plugin message');
+            transaction.error('No connection');
+          }
+        };
+      
+        Janus.PluginHandle.prototype.createOffer = function(options) {
+          options = options || {};
+          var that = this;
+          if(!Janus.isWebrtcSupported()) {
+            this.error('WebRTC not supported by this browser');
+            if(options.error) {
+              options.error('WebRTC not supported by this browser');
+            }
+            return;
+          }
+      
+          this.info('Creating offer');
+          if(this.webrtcStuff.pc) {
+            this.warn('RTCPeerConnection already created');
+          }
+          this.webrtcStuff.pc = new RTCPeerConnection(this.webrtcStuff.config);
+          this.info('RTCPeerConnection:', this.webrtcStuff.pc);
+      
+          this.webrtcStuff.pc.onicecandidate = function(event) {
+            if(event.candidate) {
+              that.info('Got ICE candidate:', event.candidate);
+            } else {
+              that.info('ICE gathering completed');
+              that.webrtcStuff.iceCompleted = true;
+              if(options.success) {
+                options.success(that.webrtcStuff.mySdp);
+              }
+            }
+          };
+      
+          this.webrtcStuff.pc.oniceconnectionstatechange = function() {
+            that.info('ICE connection state changed to ' + that.webrtcStuff.pc.iceConnectionState);
+          };
+      
+          this.webrtcStuff.pc.ontrack = function(event) {
+            that.info('Got remote track:', event.track);
+            if(!event.streams || !event.streams.length) {
+              that.warn('No remote stream, just track');
+              if(!that.webrtcStuff.remoteStream) {
+                that.webrtcStuff.remoteStream = new MediaStream();
+              }
+              that.webrtcStuff.remoteStream.addTrack(event.track);
+              if(that.onremotestream) {
+                that.onremotestream(that.webrtcStuff.remoteStream);
+              }
+              return;
+            }
+            that.info('Got remote stream:', event.streams[0]);
+            that.webrtcStuff.remoteStream = event.streams[0];
+            if(that.onremotestream) {
+              that.onremotestream(event.streams[0]);
+            }
+          };
+      
+          var media = options.media || {};
+          if(media.stream) {
+            this.info('Using custom stream:', media.stream);
+            this.webrtcStuff.stream = media.stream;
+            media.stream.getTracks().forEach(function(track) {
+              that.webrtcStuff.pc.addTrack(track, media.stream);
+            });
+            if(this.onlocalstream) {
+              this.onlocalstream(media.stream);
+            }
+            this.createOfferInternal(options);
+          } else {
+            navigator.mediaDevices.getUserMedia(media)
+              .then(function(stream) {
+                that.info('Got local stream:', stream);
+                that.webrtcStuff.stream = stream;
+                stream.getTracks().forEach(function(track) {
+                  that.webrtcStuff.pc.addTrack(track, stream);
+                });
+                if(that.onlocalstream) {
+                  that.onlocalstream(stream);
+                }
+                that.createOfferInternal(options);
+              })
+              .catch(function(error) {
+                that.error('Failed to get local stream:', error);
+                if(options.error) {
+                  options.error(error);
+                }
+              });
+          }
+        };
+      
+        Janus.PluginHandle.prototype.createOfferInternal = function(options) {
+          var that = this;
+          var sdpConstraints = options.sdpConstraints || {
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: true
+          };
+          this.info('SDP constraints:', sdpConstraints);
+      
+          this.webrtcStuff.pc.createOffer(sdpConstraints)
+            .then(function(offer) {
+              that.info('Created offer:', offer);
+              that.webrtcStuff.mySdp = offer;
+              return that.webrtcStuff.pc.setLocalDescription(offer);
+            })
+            .then(function() {
+              that.info('Local description set');
+              if(!that.webrtcStuff.iceCompleted && !options.trickle) {
+                that.info('Waiting for ICE gathering to complete');
+              } else if(options.success) {
+                options.success(that.webrtcStuff.mySdp);
+              }
+            })
+            .catch(function(error) {
+              that.error('Failed to create offer:', error);
+              if(options.error) {
+                options.error(error);
+              }
+            });
+        };
+      
+        Janus.PluginHandle.prototype.createAnswer = function(options) {
+          options = options || {};
+          var that = this;
+          if(!Janus.isWebrtcSupported()) {
+            this.error('WebRTC not supported by this browser');
+            if(options.error) {
+              options.error('WebRTC not supported by this browser');
+            }
+            return;
+          }
+      
+          this.info('Creating answer');
+          if(this.webrtcStuff.pc) {
+            this.warn('RTCPeerConnection already created');
+          }
+          this.webrtcStuff.pc = new RTCPeerConnection(this.webrtcStuff.config);
+          this.info('RTCPeerConnection:', this.webrtcStuff.pc);
+      
+          this.webrtcStuff.pc.onicecandidate = function(event) {
+            if(event.candidate) {
+              that.info('Got ICE candidate:', event.candidate);
+            } else {
+              that.info('ICE gathering completed');
+              that.webrtcStuff.iceCompleted = true;
+              if(options.success) {
+                options.success(that.webrtcStuff.mySdp);
+              }
+            }
+          };
+      
+          this.webrtcStuff.pc.oniceconnectionstatechange = function() {
+            that.info('ICE connection state changed to ' + that.webrtcStuff.pc.iceConnectionState);
+          };
+      
+          this.webrtcStuff.pc.ontrack = function(event) {
+            that.info('Got remote track:', event.track);
+            if(!event.streams || !event.streams.length) {
+              that.warn('No remote stream, just track');
+              if(!that.webrtcStuff.remoteStream) {
+                that.webrtcStuff.remoteStream = new MediaStream();
+              }
+              that.webrtcStuff.remoteStream.addTrack(event.track);
+              if(that.onremotestream) {
+                that.onremotestream(that.webrtcStuff.remoteStream);
+              }
+              return;
+            }
+            that.info('Got remote stream:', event.streams[0]);
+            that.webrtcStuff.remoteStream = event.streams[0];
+            if(that.onremotestream) {
+              that.onremotestream(event.streams[0]);
+            }
+          };
+      
+          var jsep = options.jsep;
+          if(!jsep) {
+            this.error('Invalid JSEP');
+            if(options.error) {
+              options.error('Invalid JSEP');
+            }
+            return;
+          }
+      
+          this.webrtcStuff.pc.setRemoteDescription(new RTCSessionDescription(jsep))
+            .then(function() {
+              that.info('Remote description set');
+              var media = options.media || {};
+              if(media.stream) {
+                that.info('Using custom stream:', media.stream);
+                that.webrtcStuff.stream = media.stream;
+                media.stream.getTracks().forEach(function(track) {
+                  that.webrtcStuff.pc.addTrack(track, media.stream);
+                });
+                if(that.onlocalstream) {
+                  that.onlocalstream(media.stream);
+                }
+                that.createAnswerInternal(options);
+              } else {
+                navigator.mediaDevices.getUserMedia(media)
+                  .then(function(stream) {
+                    that.info('Got local stream:', stream);
+                    that.webrtcStuff.stream = stream;
+                    stream.getTracks().forEach(function(track) {
+                      that.webrtcStuff.pc.addTrack(track, stream);
+                    });
+                    if(that.onlocalstream) {
+                      that.onlocalstream(stream);
+                    }
+                    that.createAnswerInternal(options);
+                  })
+                  .catch(function(error) {
+                    that.error('Failed to get local stream:', error);
+                    if(options.error) {
+                      options.error(error);
+                    }
+                  });
+              }
+            })
+            .catch(function(error) {
+              that.error('Failed to set remote description:', error);
+              if(options.error) {
+                options.error(error);
+              }
+            });
+        };
+      
+        Janus.PluginHandle.prototype.createAnswerInternal = function(options) {
+          var that = this;
+          var sdpConstraints = options.sdpConstraints || {};
+          this.info('SDP constraints:', sdpConstraints);
+      
+          this.webrtcStuff.pc.createAnswer(sdpConstraints)
+            .then(function(answer) {
+              that.info('Created answer:', answer);
+              that.webrtcStuff.mySdp = answer;
+              return that.webrtcStuff.pc.setLocalDescription(answer);
+            })
+            .then(function() {
+              that.info('Local description set');
+              if(!that.webrtcStuff.iceCompleted && !options.trickle) {
+                that.info('Waiting for ICE gathering to complete');
+              } else if(options.success) {
+                options.success(that.webrtcStuff.mySdp);
+              }
+            })
+            .catch(function(error) {
+              that.error('Failed to create answer:', error);
+              if(options.error) {
+                options.error(error);
+              }
+            });
+        };
+      
+        Janus.PluginHandle.prototype.handleRemoteJsep = function(options) {
+          options = options || {};
+          var that = this;
+          var jsep = options.jsep;
+          if(!jsep) {
+            this.error('Invalid JSEP');
+            if(options.error) {
+              options.error('Invalid JSEP');
+            }
+            return;
+          }
+          if(!this.webrtcStuff.pc) {
+            this.warn('RTCPeerConnection not created, deferring');
+            this.webrtcStuff.jsep = jsep;
+            this.webrtcStuff.jsepOptions = options;
+            return;
+          }
+      
+          this.webrtcStuff.pc.setRemoteDescription(new RTCSessionDescription(jsep))
+            .then(function() {
+              that.info('Remote description set');
+              if(options.success) {
+                options.success();
+              }
+            })
+            .catch(function(error) {
+              that.error('Failed to set remote description:', error);
+              if(options.error) {
+                options.error(error);
+              }
+            });
+        };
+      
+        Janus.PluginHandle.prototype.hangup = function(sendRequest) {
+          this.info('Hanging up');
+          if(sendRequest === undefined || sendRequest === null) {
+            sendRequest = true;
+          }
+          if(this.webrtcStuff.pc) {
+            this.webrtcStuff.pc.close();
+            this.webrtcStuff.pc = null;
+          }
+          if(this.webrtcStuff.stream) {
+            this.webrtcStuff.stream.getTracks().forEach(function(track) {
+              track.stop();
+            });
+          }
+          this.webrtcStuff.stream = null;
+          this.webrtcStuff.remoteStream = null;
+          this.webrtcStuff.mySdp = null;
+          this.webrtcStuff.iceCompleted = false;
+      
+          if(sendRequest) {
+            this.send({ message: { request: 'hangup' } });
+          }
+        };
+      
+        Janus.PluginHandle.prototype.detach = function(options) {
+          options = options || {};
+          var that = this;
+          this.info('Detaching handle');
+          this.hangup(false);
+      
+          var transaction = this.gateway.transactions[this.gateway.randomString(this.gateway.transactionIdLength)] = {
+            callback: function(json) {
+              this.info('Got response to detach:', json);
+              if(json.janus === 'success') {
+                this.info('Handle ' + this.id + ' detached');
+                if(this.ondetached) {
+                  this.ondetached();
+                }
+                delete this.gateway.pluginHandles[this.id];
+                if(options.success) {
+                  options.success();
+                }
+              } else {
+                this.error('Error detaching handle:', json.error.code, json.error.reason);
+                if(options.error) {
+                  options.error('Error detaching handle: ' + json.error.code + ' ' + json.error.reason);
+                }
+              }
+            }.bind(this),
+            error: function(cause) {
+              this.error('Error detaching handle:', cause);
+              if(options.error) {
+                options.error('Error detaching handle: ' + cause);
+              }
+            }.bind(this)
+          };
+      
+          var request = {
+            janus: 'detach',
+            session_id: this.gateway.sessionId,
+            handle_id: this.id,
+            transaction: transaction.callback.transaction
+          };
+          if(this.gateway.token) {
+            request.token = this.gateway.token;
+          }
+          if(this.gateway.apisecret) {
+            request.apisecret = this.gateway.apisecret;
+          }
+      
+          if(this.gateway.gateway) {
+            this.info('Sending detach request:', request);
+            this.gateway.gateway.send(request, transaction);
+          } else {
+            this.warn('No connection to send detach request');
+            transaction.error('No connection');
+          }
+        };
+      
+        Janus.PluginHandle.prototype.getPeerConnection = function() {
+          return this.webrtcStuff.pc;
+        };
+      
+        Janus.PluginHandle.prototype.getDataChannel = function() {
+          return this.webrtcStuff.dataChannel;
+        };
+      
+        Janus.PluginHandle.prototype.getLocalStream = function() {
+          return this.webrtcStuff.stream;
+        };
+      
+        Janus.PluginHandle.prototype.getRemoteStream = function() {
+          return this.webrtcStuff.remoteStream;
+        };
+      
+        return Janus;
+      
+      }));
+    </script>
+
 
     <script>
         var youtubeTag = document.createElement('script');
@@ -102,6 +1144,7 @@
             ulSpan.textContent = "..."; 
             latSpan.textContent = "...";
             
+            // ndt7 is now defined because it was inlined
             const client = new ndt7.Client();
             
             let uploadTestStarted = false; 
@@ -148,9 +1191,7 @@
                 ulSpan.textContent = "error";
                 latSpan.textContent = "error";
             } finally {
-                if (typeof ndt7 !== 'undefined') {
-                    document.getElementById('start-speed-test').disabled = false;
-                }
+                document.getElementById('start-speed-test').disabled = false;
             }
         }
 
@@ -169,12 +1210,11 @@
         let echotest = null;
         let voipStatsInterval = null;
 
-        if (typeof Janus !== 'undefined') {
-            Janus.init({
-                debug: false,
-                callback: () => voipButton.disabled = false
-            });
-        }
+        // Initialize Janus library (it's now defined)
+        Janus.init({
+            debug: false,
+            callback: () => voipButton.disabled = false
+        });
         voipButton.addEventListener('click', runVoipTest);
         
         function runVoipTest() {
@@ -250,8 +1290,16 @@
             let lastPacketsRecv = 0;
 
             voipStatsInterval = setInterval(async () => {
-                const pc = echotest.getPeerConnection();
-                if (!pc) return;
+                
+                // --- THIS IS THE BUG FIX ---
+                // The inlined janus.js is an older version that stores the
+                // PeerConnection on the global 'Janus.instance' object.
+                if (!Janus.instance || !Janus.instance.webrtcStuff || !Janus.instance.webrtcStuff.pc) {
+                    clearInterval(voipStatsInterval);
+                    return;
+                }
+                const pc = Janus.instance.webrtcStuff.pc;
+                // --- END BUG FIX ---
 
                 const stats = await pc.getStats();
                 let rtt = 0;
@@ -416,30 +1464,23 @@
         });
 
 
-        // --- UPDATED: LIBRARY LOADING CHECK (with alert) ---
+        /* The library loading check is no longer needed because 
+         the scripts are now part of this file and will
+         always be defined.
+        */
         document.addEventListener('DOMContentLoaded', () => {
-            let errorMessages = []; // Use plain text for alerts
-
-            // Check for M-Lab (ndt7)
+             // Check if libraries were inlined correctly
             if (typeof ndt7 === 'undefined') {
-                errorMessages.push("Speed Test Error: The M-Lab library (ndt7.js) failed to load. This test is disabled.");
+                alert("CRITICAL ERROR: The ndt7 script is missing from the HTML file.");
                 const btn = document.getElementById('start-speed-test');
                 btn.disabled = true;
                 btn.textContent = "Speed Test (Error)";
             }
-
-            // Check for WebRTC (Janus)
             if (typeof Janus === 'undefined') {
-                errorMessages.push("VoIP Test Error: The Janus WebRTC library (janus.js) failed to load. This test is disabled.");
+                alert("CRITICAL ERROR: The Janus script is missing from the HTML file.");
                 const btn = document.getElementById('start-voip-test');
                 btn.disabled = true;
                 btn.textContent = "VoIP Test (Error)";
-            }
-            
-            // Display a single alert if any errors were found
-            if (errorMessages.length > 0) {
-                // Join messages with a newline character for the alert box
-                alert("CRITICAL LIBRARY ERROR:\n\n" + errorMessages.join("\n\n"));
             }
         });
 
