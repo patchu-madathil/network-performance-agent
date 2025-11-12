@@ -11,11 +11,24 @@
         .results-grid { display: grid; grid-template-columns: 150px 1fr; gap: 5px; }
         .results-grid span { font-weight: bold; }
         #voip-status { font-style: italic; color: #555; }
+        
+        /* --- NEW ERROR STYLE --- */
+        #library-errors {
+            color: #721c24; /* Dark red text */
+            background-color: #f8d7da; /* Light red background */
+            border: 1px solid #f5c6cb; /* Red border */
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none; /* Hidden by default */
+        }
     </style>
 </head>
 <body>
 
     <h1>Comprehensive Internet Measurement App</h1>
+
+    <div id="library-errors"></div>
 
     <div class="test-section">
         <h2>1. Speed Test (M-Lab)</h2>
@@ -86,7 +99,7 @@
     <script>
         
         // ===================================
-        // --- 1. SPEED TEST LOGIC (w/ Progress) ---
+        // --- 1. SPEED TEST LOGIC ---
         // ===================================
         document.getElementById('start-speed-test').addEventListener('click', runSpeedTest);
 
@@ -146,7 +159,10 @@
                 ulSpan.textContent = "error";
                 latSpan.textContent = "error";
             } finally {
-                document.getElementById('start-speed-test').disabled = false;
+                // Re-enable button only if the library didn't fail to load
+                if (typeof ndt7 !== 'undefined') {
+                    document.getElementById('start-speed-test').disabled = false;
+                }
             }
         }
 
@@ -166,10 +182,13 @@
         let voipStatsInterval = null;
 
         // Initialize Janus library
-        Janus.init({
-            debug: false,
-            callback: () => voipButton.disabled = false
-        });
+        // This will only run if Janus was loaded (see check below)
+        if (typeof Janus !== 'undefined') {
+            Janus.init({
+                debug: false,
+                callback: () => voipButton.disabled = false
+            });
+        }
         voipButton.addEventListener('click', runVoipTest);
         
         function runVoipTest() {
@@ -290,7 +309,7 @@
                 rValue = 93.2 - (effectiveLatency - 120) / 10;
             }
             rValue = rValue - (packetLossPercent * 2.5);
-            let mos = 1 + (0.035 * rValue) + (0.000007 * rValue * (rValue - 60) * (100 - rValue));
+            let mos = 1 + (0.035 * rValue) + (0.000007 * rValue * (rValue - 60) * (100 * rValue));
             if (mos < 1) return 1;
             if (mos > 4.5) return 4.5;
             return mos;
@@ -407,6 +426,39 @@
                 const quality = videoPlayer.getVideoPlaybackQuality();
                 const dropped = quality.droppedVideoFrames - initialDroppedFrames;
                 document.getElementById('html5-dropped').textContent = dropped;
+            }
+        });
+
+
+        // --- NEW: LIBRARY LOADING CHECK ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const errorDiv = document.getElementById('library-errors');
+            let errorMessages = [];
+
+            // Check for M-Lab (ndt7)
+            if (typeof ndt7 === 'undefined') {
+                errorMessages.push("<strong>Speed Test Error:</strong> The M-Lab library (ndt7.js) failed to load. This test is disabled.");
+                const btn = document.getElementById('start-speed-test');
+                btn.disabled = true;
+                btn.textContent = "Speed Test (Error)";
+            }
+
+            // Check for WebRTC (Janus)
+            if (typeof Janus === 'undefined') {
+                errorMessages.push("<strong>VoIP Test Error:</strong> The Janus WebRTC library (janus.js) failed to load. This test is disabled.");
+                const btn = document.getElementById('start-voip-test');
+                btn.disabled = true;
+                btn.textContent = "VoIP Test (Error)";
+            }
+            
+            // Note: The YouTube test is already handled. Its button is 'disabled' by default
+            // and is only enabled by the 'onPlayerReady' callback, which only fires if the
+            // YouTube API loads successfully. No extra check is needed.
+
+            // Display errors if any
+            if (errorMessages.length > 0) {
+                errorDiv.innerHTML = errorMessages.join("<br><br>");
+                errorDiv.style.display = 'block';
             }
         });
 
