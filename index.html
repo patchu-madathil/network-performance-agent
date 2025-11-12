@@ -86,7 +86,7 @@
     <script>
         
         // ===================================
-        // --- 1. SPEED TEST LOGIC (UPDATED) ---
+        // --- 1. SPEED TEST LOGIC (w/ Progress) ---
         // ===================================
         document.getElementById('start-speed-test').addEventListener('click', runSpeedTest);
 
@@ -96,37 +96,29 @@
             const ulSpan = document.getElementById('ul-speed');
             const latSpan = document.getElementById('latency');
 
-            // --- THIS IS THE UPDATE ---
-            // Set specific states for each test
             dlSpan.textContent = "Connecting...";
-            ulSpan.textContent = "..."; // Will be updated when upload starts
-            latSpan.textContent = "..."; // Will be updated when latency is measured
+            ulSpan.textContent = "..."; 
+            latSpan.textContent = "...";
             
             const client = new ndt7.Client();
             
-            // This flag helps set the "Running Upload..." state
             let uploadTestStarted = false; 
             
             client.onmeasurement = (measurement) => {
                 if (measurement.kind === 'download') {
                     if (measurement.throughput?.Value) {
-                        // Live download speed
                         dlSpan.textContent = `${(measurement.throughput.Value / 1000).toFixed(2)} Mbps`;
                     } else {
-                        // This fires when the download test *starts* but before the first measurement
                         dlSpan.textContent = "Running Download...";
                     }
                 }
                 
                 if (measurement.kind === 'upload') {
                     if (!uploadTestStarted) {
-                        // This fires once when the upload test begins
                         ulSpan.textContent = "Running Upload...";
                         uploadTestStarted = true;
                     }
-                    
                     if (measurement.throughput?.Value) {
-                        // Live upload speed
                         ulSpan.textContent = `${(measurement.throughput.Value / 1000).toFixed(2)} Mbps`;
                     }
                 }
@@ -141,10 +133,8 @@
             };
 
             try {
-                // This waits for the *entire* test (DL + UL) to finish
                 await client.start();
                 
-                // The test is complete, now use the final summary data for accuracy
                 const summary = await client.getSummary();
                 dlSpan.textContent = `${(summary.download.throughput.Value / 1000).toFixed(2)} Mbps (Final)`;
                 ulSpan.textContent = `${(summary.upload.throughput.Value / 1000).toFixed(2)} Mbps (Final)`;
@@ -195,7 +185,6 @@
                         success: (pluginHandle) => {
                             echotest = pluginHandle;
                             voipStatus.textContent = "Status: Starting call (check for mic permission)...";
-                            // Create an offer for an audio-only call
                             echotest.createOffer({
                                 media: { audio: true, video: false },
                                 success: (jsep) => {
@@ -215,7 +204,6 @@
                             voipButton.disabled = false;
                         },
                         onmessage: (msg, jsep) => {
-                            // We got an answer from the echo server
                             if (jsep) {
                                 echotest.handleRemoteJsep({ jsep: jsep });
                             }
@@ -242,7 +230,6 @@
                 }
             });
             
-            // Stop the test after 15 seconds
             setTimeout(stopVoipTest, 15000);
         }
 
@@ -268,12 +255,9 @@
                 let packetsReceived = 0;
 
                 stats.forEach(report => {
-                    // Find the active candidate pair for RTT
                     if (report.type === 'candidate-pair' && report.state === 'succeeded') {
                         rtt = report.currentRoundTripTime * 1000; // in ms
                     }
-                    
-                    // Find the inbound audio stream for Jitter and Packet Loss
                     if (report.type === 'inbound-rtp' && report.kind === 'audio') {
                         jitter = report.jitter * 1000; // in ms
                         packetsLost = report.packetsLost;
@@ -281,51 +265,34 @@
                     }
                 });
                 
-                // Calculate packet loss percentage
                 const totalPackets = (packetsReceived - lastPacketsRecv) + (packetsLost - lastPacketsLost);
                 const lossPercent = (totalPackets === 0) ? 0 : ((packetsLost - lastPacketsLost) / totalPackets) * 100;
 
-                // Update last known values for next interval
                 lastPacketsLost = packetsLost;
                 lastPacketsRecv = packetsReceived;
 
-                // Calculate MOS
                 const mos = calculateMOS(rtt, jitter, lossPercent);
 
-                // Display results
                 mosSpan.textContent = mos.toFixed(2);
                 rttSpan.textContent = `${rtt.toFixed(0)} ms`;
                 jitterSpan.textContent = `${jitter.toFixed(0)} ms`;
                 lossSpan.textContent = `${lossPercent.toFixed(2)} %`;
                 
-            }, 1000); // Poll every second
+            }, 1000);
         }
 
-        /**
-         * Calculates a MOS score (1-5) using a simplified E-model.
-         * This is an estimation, not a perfect score.
-         */
         function calculateMOS(rtt, jitter, packetLossPercent) {
-            // Effective latency
             const effectiveLatency = rtt + (jitter * 2) + 10;
-            
-            // Calculate R-Value (0-100)
             let rValue;
             if (effectiveLatency < 160) {
                 rValue = 93.2 - (effectiveLatency / 40);
             } else {
                 rValue = 93.2 - (effectiveLatency - 120) / 10;
             }
-            
-            // Deduct for packet loss
             rValue = rValue - (packetLossPercent * 2.5);
-
-            // Convert R-Value to MOS (1-5)
             let mos = 1 + (0.035 * rValue) + (0.000007 * rValue * (rValue - 60) * (100 - rValue));
-            
-            // Clamp MOS to 1-5 range (though it's technically 1-4.5)
             if (mos < 1) return 1;
-            if (mos > 4.5) return 4.5; // E-model max is ~4.5
+            if (mos > 4.5) return 4.5;
             return mos;
         }
 
@@ -333,7 +300,6 @@
         // --- 3. VIDEO TEST LOGIC ---
         // ===================================
         
-        // --- YouTube Test ---
         var ytPlayer;
         var ytStartTime, ytVideoStartTime;
         var ytRebufferCount = 0;
@@ -343,7 +309,7 @@
             ytPlayer = new YT.Player('youtube-player', {
                 height: '240',
                 width: '426',
-                videoId: 'LXb3EKWsInQ', // 4K 60fps Test Video
+                videoId: 'LXb3EKWsInQ',
                 playerVars: { 'controls': 0, 'autoplay': 0 },
                 events: {
                     'onReady': onPlayerReady,
@@ -365,7 +331,7 @@
             document.getElementById('youtube-rebuffers').textContent = '0';
             document.getElementById('youtube-tts').textContent = 'running...';
             
-            ytPlayer.setPlaybackQuality('hd1080'); // Suggest 1080p
+            ytPlayer.setPlaybackQuality('hd1080');
             ytPlayer.playVideo();
 
             setTimeout(() => {
@@ -387,7 +353,6 @@
             }
         }
 
-        // --- HTML5 Video Test ---
         const videoPlayer = document.getElementById('html5-video-player');
         let html5StartTime, html5VideoStartTime;
         let html5RebufferCount = 0;
