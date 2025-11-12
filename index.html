@@ -55,12 +55,11 @@
         <hr style="margin: 20px 0;">
 
         <h3>HTML5 Video Test (Recommended)</h3>
-        <p>This test uses a local file for more accurate metrics, including dropped frames.</p>
-        <p><strong>Action Required:</strong> To use this, you must have a video file (e.t., "test-video.mp4") in the same folder as this HTML file and update the `src` in the code.</p>
+        <p>This test uses a public video file for more accurate metrics, including dropped frames.</p>
         <button id="start-html5-test">Start HTML5 Test</button>
         
         <video id="html5-video-player" width="100%" controls muted
-            src="test-video.mp4" 
+            src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" 
             style="display:none; margin-top: 10px; background-color: black;">
         </video>
         
@@ -72,14 +71,14 @@
     </div>
 
 
-    <script src="https://ndt-js.s3.amazonaws.com/ndt7/v0.9.0/ndt7.js"></script>
+    <script src="httpss://ndt-js.s3.amazonaws.com/ndt7/v0.9.0/ndt7.js"></script>
     
-    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/janus-gateway/1.1.5/janus.js"></script>
+    <script src="httpss://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script src="httpss://cdnjs.cloudflare.com/ajax/libs/janus-gateway/1.1.5/janus.js"></script>
 
     <script>
         var youtubeTag = document.createElement('script');
-        youtubeTag.src = "https://www.youtube.com/iframe_api";
+        youtubeTag.src = "httpss://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(youtubeTag, firstScriptTag);
     </script>
@@ -378,7 +377,7 @@
 
             videoPlayer.play().catch(err => {
                 console.error("HTML5 Playback Error:", err);
-                document.getElementById('html5-tts').textContent = "Error (check file path)";
+                document.getElementById('html5-tts').textContent = "Error";
             });
         });
 
