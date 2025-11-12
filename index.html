@@ -73,4 +73,378 @@
 
     <script src="https://ndt-js.s3.amazonaws.com/ndt7/v0.9.0/ndt7.js"></script>
     
-    <script src="
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/janus-gateway/1.1.5/janus.js"></script>
+
+    <script>
+        var youtubeTag = document.createElement('script');
+        youtubeTag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(youtubeTag, firstScriptTag);
+    </script>
+    
+    <script>
+        
+        // ===================================
+        // --- 1. SPEED TEST LOGIC (UPDATED) ---
+        // ===================================
+        document.getElementById('start-speed-test').addEventListener('click', runSpeedTest);
+
+        async function runSpeedTest() {
+            this.disabled = true;
+            const dlSpan = document.getElementById('dl-speed');
+            const ulSpan = document.getElementById('ul-speed');
+            const latSpan = document.getElementById('latency');
+
+            // --- THIS IS THE UPDATE ---
+            // Set specific states for each test
+            dlSpan.textContent = "Connecting...";
+            ulSpan.textContent = "..."; // Will be updated when upload starts
+            latSpan.textContent = "..."; // Will be updated when latency is measured
+            
+            const client = new ndt7.Client();
+            
+            // This flag helps set the "Running Upload..." state
+            let uploadTestStarted = false; 
+            
+            client.onmeasurement = (measurement) => {
+                if (measurement.kind === 'download') {
+                    if (measurement.throughput?.Value) {
+                        // Live download speed
+                        dlSpan.textContent = `${(measurement.throughput.Value / 1000).toFixed(2)} Mbps`;
+                    } else {
+                        // This fires when the download test *starts* but before the first measurement
+                        dlSpan.textContent = "Running Download...";
+                    }
+                }
+                
+                if (measurement.kind === 'upload') {
+                    if (!uploadTestStarted) {
+                        // This fires once when the upload test begins
+                        ulSpan.textContent = "Running Upload...";
+                        uploadTestStarted = true;
+                    }
+                    
+                    if (measurement.throughput?.Value) {
+                        // Live upload speed
+                        ulSpan.textContent = `${(measurement.throughput.Value / 1000).toFixed(2)} Mbps`;
+                    }
+                }
+                
+                if (measurement.kind === 'latency') {
+                     if (measurement.rtt?.Value) {
+                        latSpan.textContent = `${measurement.rtt.Value.toFixed(0)} ms`;
+                     } else {
+                        latSpan.textContent = "Testing Latency...";
+                     }
+                }
+            };
+
+            try {
+                // This waits for the *entire* test (DL + UL) to finish
+                await client.start();
+                
+                // The test is complete, now use the final summary data for accuracy
+                const summary = await client.getSummary();
+                dlSpan.textContent = `${(summary.download.throughput.Value / 1000).toFixed(2)} Mbps (Final)`;
+                ulSpan.textContent = `${(summary.upload.throughput.Value / 1000).toFixed(2)} Mbps (Final)`;
+                latSpan.textContent = `${summary.latency.Value.toFixed(0)} ms (Final)`;
+
+            } catch (err) {
+                console.error("Speed test failed:", err.message);
+                dlSpan.textContent = "error";
+                ulSpan.textContent = "error";
+                latSpan.textContent = "error";
+            } finally {
+                document.getElementById('start-speed-test').disabled = false;
+            }
+        }
+
+        // ===================================
+        // --- 2. WEBRTC VOIP TEST LOGIC ---
+        // ===================================
+        
+        const voipButton = document.getElementById('start-voip-test');
+        const voipStatus = document.getElementById('voip-status');
+        const mosSpan = document.getElementById('voip-mos');
+        const rttSpan = document.getElementById('voip-rtt');
+        const jitterSpan = document.getElementById('voip-jitter');
+        const lossSpan = document.getElementById('voip-loss');
+        
+        let janus = null;
+        let echotest = null;
+        let voipStatsInterval = null;
+
+        // Initialize Janus library
+        Janus.init({
+            debug: false,
+            callback: () => voipButton.disabled = false
+        });
+        voipButton.addEventListener('click', runVoipTest);
+        
+        function runVoipTest() {
+            voipButton.disabled = true;
+            voipStatus.textContent = "Status: Initializing...";
+            
+            janus = new Janus({
+                server: "https://janus.conf.meetecho.com/janus",
+                success: () => {
+                    voipStatus.textContent = "Status: Attaching to EchoTest plugin...";
+                    janus.attach({
+                        plugin: "janus.plugin.echotest",
+                        success: (pluginHandle) => {
+                            echotest = pluginHandle;
+                            voipStatus.textContent = "Status: Starting call (check for mic permission)...";
+                            // Create an offer for an audio-only call
+                            echotest.createOffer({
+                                media: { audio: true, video: false },
+                                success: (jsep) => {
+                                    voipStatus.textContent = "Status: Connecting...";
+                                    echotest.send({ message: { audio: true }, jsep: jsep });
+                                },
+                                error: (err) => {
+                                    console.error("WebRTC Offer Error:", err);
+                                    voipStatus.textContent = "Error: " + err;
+                                    voipButton.disabled = false;
+                                }
+                            });
+                        },
+                        error: (err) => {
+                            console.error("Janus attach error:", err);
+                            voipStatus.textContent = "Error: Could not attach to plugin.";
+                            voipButton.disabled = false;
+                        },
+                        onmessage: (msg, jsep) => {
+                            // We got an answer from the echo server
+                            if (jsep) {
+                                echotest.handleRemoteJsep({ jsep: jsep });
+                            }
+                        },
+                        webrtcState: (isConnected) => {
+                            if (isConnected) {
+                                voipStatus.textContent = "Status: Call established. Measuring for 15s...";
+                                startVoipStatsPolling();
+                            } else {
+                                voipStatus.textContent = "Status: Call disconnected.";
+                            }
+                        },
+                        oncleanup: () => {
+                            voipStatus.textContent = "Status: Test finished.";
+                            clearInterval(voipStatsInterval);
+                            voipButton.disabled = false;
+                        }
+                    });
+                },
+                error: (err) => {
+                    console.error("Janus init error:", err);
+                    voipStatus.textContent = "Error: Could not connect to Janus server.";
+                    voipButton.disabled = false;
+                }
+            });
+            
+            // Stop the test after 15 seconds
+            setTimeout(stopVoipTest, 15000);
+        }
+
+        function stopVoipTest() {
+            if (janus) {
+                janus.destroy();
+                janus = null;
+            }
+        }
+        
+        function startVoipStatsPolling() {
+            let lastPacketsLost = 0;
+            let lastPacketsRecv = 0;
+
+            voipStatsInterval = setInterval(async () => {
+                const pc = echotest.getPeerConnection();
+                if (!pc) return;
+
+                const stats = await pc.getStats();
+                let rtt = 0;
+                let jitter = 0;
+                let packetsLost = 0;
+                let packetsReceived = 0;
+
+                stats.forEach(report => {
+                    // Find the active candidate pair for RTT
+                    if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                        rtt = report.currentRoundTripTime * 1000; // in ms
+                    }
+                    
+                    // Find the inbound audio stream for Jitter and Packet Loss
+                    if (report.type === 'inbound-rtp' && report.kind === 'audio') {
+                        jitter = report.jitter * 1000; // in ms
+                        packetsLost = report.packetsLost;
+                        packetsReceived = report.packetsReceived;
+                    }
+                });
+                
+                // Calculate packet loss percentage
+                const totalPackets = (packetsReceived - lastPacketsRecv) + (packetsLost - lastPacketsLost);
+                const lossPercent = (totalPackets === 0) ? 0 : ((packetsLost - lastPacketsLost) / totalPackets) * 100;
+
+                // Update last known values for next interval
+                lastPacketsLost = packetsLost;
+                lastPacketsRecv = packetsReceived;
+
+                // Calculate MOS
+                const mos = calculateMOS(rtt, jitter, lossPercent);
+
+                // Display results
+                mosSpan.textContent = mos.toFixed(2);
+                rttSpan.textContent = `${rtt.toFixed(0)} ms`;
+                jitterSpan.textContent = `${jitter.toFixed(0)} ms`;
+                lossSpan.textContent = `${lossPercent.toFixed(2)} %`;
+                
+            }, 1000); // Poll every second
+        }
+
+        /**
+         * Calculates a MOS score (1-5) using a simplified E-model.
+         * This is an estimation, not a perfect score.
+         */
+        function calculateMOS(rtt, jitter, packetLossPercent) {
+            // Effective latency
+            const effectiveLatency = rtt + (jitter * 2) + 10;
+            
+            // Calculate R-Value (0-100)
+            let rValue;
+            if (effectiveLatency < 160) {
+                rValue = 93.2 - (effectiveLatency / 40);
+            } else {
+                rValue = 93.2 - (effectiveLatency - 120) / 10;
+            }
+            
+            // Deduct for packet loss
+            rValue = rValue - (packetLossPercent * 2.5);
+
+            // Convert R-Value to MOS (1-5)
+            let mos = 1 + (0.035 * rValue) + (0.000007 * rValue * (rValue - 60) * (100 - rValue));
+            
+            // Clamp MOS to 1-5 range (though it's technically 1-4.5)
+            if (mos < 1) return 1;
+            if (mos > 4.5) return 4.5; // E-model max is ~4.5
+            return mos;
+        }
+
+        // ===================================
+        // --- 3. VIDEO TEST LOGIC ---
+        // ===================================
+        
+        // --- YouTube Test ---
+        var ytPlayer;
+        var ytStartTime, ytVideoStartTime;
+        var ytRebufferCount = 0;
+        var ytHasStarted = false;
+
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('youtube-player', {
+                height: '240',
+                width: '426',
+                videoId: 'LXb3EKWsInQ', // 4K 60fps Test Video
+                playerVars: { 'controls': 0, 'autoplay': 0 },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            document.getElementById('start-youtube-test').disabled = false;
+        }
+
+        document.getElementById('start-youtube-test').addEventListener('click', () => {
+            document.getElementById('start-youtube-test').disabled = true;
+            ytStartTime = performance.now();
+            ytHasStarted = false;
+            ytRebufferCount = 0;
+            
+            document.getElementById('youtube-rebuffers').textContent = '0';
+            document.getElementById('youtube-tts').textContent = 'running...';
+            
+            ytPlayer.setPlaybackQuality('hd1080'); // Suggest 1080p
+            ytPlayer.playVideo();
+
+            setTimeout(() => {
+                ytPlayer.stopVideo();
+                document.getElementById('start-youtube-test').disabled = false;
+            }, 20000);
+        });
+
+        function onPlayerStateChange(event) {
+            const state = event.data;
+            if (state === YT.PlayerState.PLAYING && !ytHasStarted) {
+                ytVideoStartTime = performance.now();
+                document.getElementById('youtube-tts').textContent = `${(ytVideoStartTime - ytStartTime).toFixed(0)} ms`;
+                ytHasStarted = true;
+            }
+            if (state === YT.PlayerState.BUFFERING && ytHasStarted) {
+                ytRebufferCount++;
+                document.getElementById('youtube-rebuffers').textContent = ytRebufferCount;
+            }
+        }
+
+        // --- HTML5 Video Test ---
+        const videoPlayer = document.getElementById('html5-video-player');
+        let html5StartTime, html5VideoStartTime;
+        let html5RebufferCount = 0;
+        let html5HasStarted = false;
+        let initialDroppedFrames = 0;
+
+        document.getElementById('start-html5-test').addEventListener('click', () => {
+            videoPlayer.style.display = 'block';
+            videoPlayer.load();
+            
+            html5StartTime = performance.now();
+            html5HasStarted = false;
+            html5RebufferCount = 0;
+            
+            document.getElementById('html5-tts').textContent = 'running...';
+            document.getElementById('html5-rebuffers').textContent = '0';
+            document.getElementById('html5-dropped').textContent = '0';
+
+            videoPlayer.play().catch(err => {
+                console.error("HTML5 Playback Error:", err);
+                document.getElementById('html5-tts').textContent = "Error";
+            });
+        });
+
+        videoPlayer.addEventListener('playing', () => {
+            if (!html5HasStarted) {
+                html5VideoStartTime = performance.now();
+                document.getElementById('html5-tts').textContent = `${(html5VideoStartTime - html5StartTime).toFixed(0)} ms`;
+                html5HasStarted = true;
+                const quality = videoPlayer.getVideoPlaybackQuality();
+                initialDroppedFrames = quality.droppedVideoFrames;
+            }
+        });
+
+        videoPlayer.addEventListener('waiting', () => {
+            if (html5HasStarted) {
+                html5RebufferCount++;
+                document.getElementById('html5-rebuffers').textContent = html5RebufferCount;
+            }
+        });
+        
+        videoPlayer.addEventListener('timeupdate', () => {
+            if (html5HasStarted && videoPlayer.getVideoPlaybackQuality) {
+                const quality = videoPlayer.getVideoPlaybackQuality();
+                const dropped = quality.droppedVideoFrames - initialDroppedFrames;
+                document.getElementById('html5-dropped').textContent = dropped;
+            }
+        });
+
+        videoPlayer.addEventListener('ended', () => {
+            if (videoPlayer.getVideoPlaybackQuality) {
+                const quality = videoPlayer.getVideoPlaybackQuality();
+                const dropped = quality.droppedVideoFrames - initialDroppedFrames;
+                document.getElementById('html5-dropped').textContent = dropped;
+            }
+        });
+
+    </script>
+</body>
+</html>
