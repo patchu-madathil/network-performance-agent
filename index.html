@@ -1,4 +1,79 @@
-<script src="https://unpkg.com/@m-lab/ndt7-js@0.9.0/dist/ndt7.js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Internet Measurement App</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        .test-section { border: 1px solid #ccc; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+        .test-section h2 { margin-top: 0; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:disabled { background-color: #ccc; }
+        .results-grid { display: grid; grid-template-columns: 150px 1fr; gap: 5px; }
+        .results-grid span { font-weight: bold; }
+        #voip-status { font-style: italic; color: #555; }
+        
+        /* The #library-errors style has been removed */
+    </style>
+</head>
+<body>
+
+    <h1>Comprehensive Internet Measurement App</h1>
+
+    <div class="test-section">
+        <h2>1. Speed Test (M-Lab)</h2>
+        <button id="start-speed-test">Start Speed Test</button>
+        <div class="results-grid" style="margin-top: 15px;">
+            <span>Download:</span> <span id="dl-speed">...</span>
+            <span>Upload:</span> <span id="ul-speed">...</span>
+            <span>Latency:</span> <span id="latency">...</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. VoIP Simulation (Janus Echo Test)</h2>
+        <p>This test makes a real audio call to a public echo server to measure network quality and calculate a MOS score.</p>
+        <button id="start-voip-test">Start VoIP Test (15s)</button>
+        <div id="voip-status" style="margin-top: 15px;">Status: Idle</div>
+        <div class="results-grid" style="margin-top: 10px;">
+            <span>MOS Score (1-5):</span> <span id="voip-mos">...</span>
+            <span>Latency (RTT):</span> <span id="voip-rtt">...</span>
+            <span>Jitter:</span> <span id="voip-jitter">...</span>
+            <span>Packet Loss:</span> <span id="voip-loss">...</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Video Performance Tests</h2>
+
+        <h3>YouTube Test</h3>
+        <p>This test measures the startup time and buffering events for an embedded 4K YouTube video. Quality is <strong>suggested</strong> but not guaranteed by YouTube.</p>
+        <button id="start-youtube-test" disabled>Start YouTube Test (20s)</button>
+        <div id="youtube-player" style="margin-top: 10px;"></div>
+        <div class="results-grid" style="margin-top: 10px;">
+            <span>Time to Start:</span> <span id="youtube-tts">...</span>
+            <span>Rebuffer Events:</span> <span id="youtube-rebuffers">...</span>
+        </div>
+
+        <hr style="margin: 20px 0;">
+
+        <h3>HTML5 Video Test (Recommended)</h3>
+        <p>This test uses a public video file for more accurate metrics, including dropped frames.</p>
+        <button id="start-html5-test">Start HTML5 Test</button>
+        
+        <video id="html5-video-player" width="100%" controls muted
+            src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" 
+            style="display:none; margin-top: 10px; background-color: black;">
+        </video>
+        
+        <div class="results-grid" style="margin-top: 10px;">
+            <span>Time to Start:</span> <span id="html5-tts">...</span>
+            <span>Rebuffer Events:</span> <span id="html5-rebuffers">...</span>
+            <span>Dropped Frames:</span> <span id="html5-dropped">...</span>
+        </div>
+    </div>
+
+
+    <script src="https://unpkg.com/@m-lab/ndt7-js@0.9.0/dist/ndt7.js"></script>
     
     <script src="https://unpkg.com/webrtc-adapter@9.0.3/out/adapter.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/janus-gateway/1.1.5/janus.js"></script>
@@ -73,7 +148,6 @@
                 ulSpan.textContent = "error";
                 latSpan.textContent = "error";
             } finally {
-                // Re-enable button only if the library didn't fail to load
                 if (typeof ndt7 !== 'undefined') {
                     document.getElementById('start-speed-test').disabled = false;
                 }
@@ -95,8 +169,6 @@
         let echotest = null;
         let voipStatsInterval = null;
 
-        // Initialize Janus library
-        // This will only run if Janus was loaded (see check below)
         if (typeof Janus !== 'undefined') {
             Janus.init({
                 debug: false,
@@ -138,7 +210,7 @@
                         },
                         onmessage: (msg, jsep) => {
                             if (jsep) {
-                                echotest.handleRemoteJsep({ jsep: jjsep });
+                                echotest.handleRemoteJsep({ jsep: jsep });
                             }
                         },
                         webrtcState: (isConnected) => {
@@ -233,17 +305,124 @@
         // --- 3. VIDEO TEST LOGIC ---
         // ===================================
         
-        // ... (rest of video test code) ...
+        var ytPlayer;
+        var ytStartTime, ytVideoStartTime;
+        var ytRebufferCount = 0;
+        var ytHasStarted = false;
+
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('youtube-player', {
+                height: '240',
+                width: '426',
+                videoId: 'LXb3EKWsInQ',
+                playerVars: { 'controls': 0, 'autoplay': 0 },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            document.getElementById('start-youtube-test').disabled = false;
+        }
+
+        document.getElementById('start-youtube-test').addEventListener('click', () => {
+            document.getElementById('start-youtube-test').disabled = true;
+            ytStartTime = performance.now();
+            ytHasStarted = false;
+            ytRebufferCount = 0;
+            
+            document.getElementById('youtube-rebuffers').textContent = '0';
+            document.getElementById('youtube-tts').textContent = 'running...';
+            
+            ytPlayer.setPlaybackQuality('hd1080');
+            ytPlayer.playVideo();
+
+            setTimeout(() => {
+                ytPlayer.stopVideo();
+                document.getElementById('start-youtube-test').disabled = false;
+            }, 20000);
+        });
+
+        function onPlayerStateChange(event) {
+            const state = event.data;
+            if (state === YT.PlayerState.PLAYING && !ytHasStarted) {
+                ytVideoStartTime = performance.now();
+                document.getElementById('youtube-tts').textContent = `${(ytVideoStartTime - ytStartTime).toFixed(0)} ms`;
+                ytHasStarted = true;
+            }
+            if (state === YT.PlayerState.BUFFERING && ytHasStarted) {
+                ytRebufferCount++;
+                document.getElementById('youtube-rebuffers').textContent = ytRebufferCount;
+            }
+        }
+
+        const videoPlayer = document.getElementById('html5-video-player');
+        let html5StartTime, html5VideoStartTime;
+        let html5RebufferCount = 0;
+        let html5HasStarted = false;
+        let initialDroppedFrames = 0;
+
+        document.getElementById('start-html5-test').addEventListener('click', () => {
+            videoPlayer.style.display = 'block';
+            videoPlayer.load();
+            
+            html5StartTime = performance.now();
+            html5HasStarted = false;
+            html5RebufferCount = 0;
+            
+            document.getElementById('html5-tts').textContent = 'running...';
+            document.getElementById('html5-rebuffers').textContent = '0';
+            document.getElementById('html5-dropped').textContent = '0';
+
+            videoPlayer.play().catch(err => {
+                console.error("HTML5 Playback Error:", err);
+                document.getElementById('html5-tts').textContent = "Error";
+            });
+        });
+
+        videoPlayer.addEventListener('playing', () => {
+            if (!html5HasStarted) {
+                html5VideoStartTime = performance.now();
+                document.getElementById('html5-tts').textContent = `${(html5VideoStartTime - html5StartTime).toFixed(0)} ms`;
+                html5HasStarted = true;
+                const quality = videoPlayer.getVideoPlaybackQuality();
+                initialDroppedFrames = quality.droppedVideoFrames;
+            }
+        });
+
+        videoPlayer.addEventListener('waiting', () => {
+            if (html5HasStarted) {
+                html5RebufferCount++;
+                document.getElementById('html5-rebuffers').textContent = html5RebufferCount;
+            }
+        });
+        
+        videoPlayer.addEventListener('timeupdate', () => {
+            if (html5HasStarted && videoPlayer.getVideoPlaybackQuality) {
+                const quality = videoPlayer.getVideoPlaybackQuality();
+                const dropped = quality.droppedVideoFrames - initialDroppedFrames;
+                document.getElementById('html5-dropped').textContent = dropped;
+            }
+        });
+
+        videoPlayer.addEventListener('ended', () => {
+            if (videoPlayer.getVideoPlaybackQuality) {
+                const quality = videoPlayer.getVideoPlaybackQuality();
+                const dropped = quality.droppedVideoFrames - initialDroppedFrames;
+                document.getElementById('html5-dropped').textContent = dropped;
+            }
+        });
 
 
-        // --- LIBRARY LOADING CHECK ---
+        // --- UPDATED: LIBRARY LOADING CHECK (with alert) ---
         document.addEventListener('DOMContentLoaded', () => {
-            const errorDiv = document.getElementById('library-errors');
-            let errorMessages = [];
+            let errorMessages = []; // Use plain text for alerts
 
             // Check for M-Lab (ndt7)
             if (typeof ndt7 === 'undefined') {
-                errorMessages.push("<strong>Speed Test Error:</strong> The M-Lab library (ndt7.js) failed to load. This test is disabled.");
+                errorMessages.push("Speed Test Error: The M-Lab library (ndt7.js) failed to load. This test is disabled.");
                 const btn = document.getElementById('start-speed-test');
                 btn.disabled = true;
                 btn.textContent = "Speed Test (Error)";
@@ -251,16 +430,16 @@
 
             // Check for WebRTC (Janus)
             if (typeof Janus === 'undefined') {
-                errorMessages.push("<strong>VoIP Test Error:</strong> The Janus WebRTC library (janus.js) failed to load. This test is disabled.");
+                errorMessages.push("VoIP Test Error: The Janus WebRTC library (janus.js) failed to load. This test is disabled.");
                 const btn = document.getElementById('start-voip-test');
                 btn.disabled = true;
                 btn.textContent = "VoIP Test (Error)";
             }
             
-            // Display errors if any
+            // Display a single alert if any errors were found
             if (errorMessages.length > 0) {
-                errorDiv.innerHTML = errorMessages.join("<br><br>");
-                errorDiv.style.display = 'block';
+                // Join messages with a newline character for the alert box
+                alert("CRITICAL LIBRARY ERROR:\n\n" + errorMessages.join("\n\n"));
             }
         });
 
